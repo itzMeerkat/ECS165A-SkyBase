@@ -1,4 +1,4 @@
-from skybase.src.page import Page
+from src.page import Page
 
 p = Page()
 print(p.has_capacity())
@@ -8,4 +8,3 @@ p.write(1023)
 d, c = p.dump()
 print(c)
 print(d)
-
