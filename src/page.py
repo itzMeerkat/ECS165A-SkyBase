@@ -14,6 +14,7 @@ class Page:
 
     '''
     Each write will write a 64-bit long data into page
+    TODO: benchmark of byte conversion
     '''
     def write(self, value):
         l = self.num_records * COL_SIZE
@@ -21,8 +22,8 @@ class Page:
         self.data[l:r] = value.to_bytes(8, 'big')
         self.num_records += 1
 
-    def read(self, rid):
-        l = rid * COL_SIZE
+    def read(self, offset):
+        l = offset * COL_SIZE
         r = l + COL_SIZE
         value = int.from_bytes(self.data[l:r], 'big')
         return value
