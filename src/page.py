@@ -21,5 +21,8 @@ class Page:
         self.data[l:r] = value.to_bytes(8, 'big')
         self.num_records += 1
 
-    def dump(self):
-        return self.data, self.num_records
+    def read(self, rid):
+        l = rid * COL_SIZE
+        r = l + COL_SIZE
+        value = int.from_bytes(self.data[l:r], 'big')
+        return value
