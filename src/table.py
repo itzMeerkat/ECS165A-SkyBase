@@ -8,62 +8,53 @@ SCHEMA_ENCODING_COLUMN = 3
 
 
 class Record:
-    def __init__(self, rid, key, columns):
-        self.rid = rid
+    '''
+    page_ids and offsets contains number of cols elements
+    '''
+    def __init__(self, rid, key, col_mask, page_ids, offsets):
         self.key = key
-        self.columns = columns
+        
+        self.rid = rid
+        self.timestamp = int(time.time() * 1000) #milli sec timestamp
+        self.col_mask = col_mask
+        self.indirection = None
+    
 
+    def get_indirection(self):
+        return self.indirection
+        
+
+    def set_indirection(self, val):
+        self.indirection = val
 
 class Column:
     def __init__(self):
-        self.base_pages = []
-        self.tail_pages = []
-
-        self.num_base_pages = -1
-        self.num_tail_pages = -1
-
-        # {rid: (tailPageId,offset)}
-        self.latest_lookup = {}
-        # {rid: (basePageId,offset)}
-        self.base_lookup = {}
-
-        self._append_base_page()
-        self._append_tail_page()
-
-
-    def _append_base_page(self):
-        self.base_pages.append(Page())
-        self.num_base_pages += 1
+        self.pages = [Page()]
+        self.num_base_pages = 1
+        self.num_pages = 1
 
     def _append_tail_page(self):
-        self.tail_pages.append(Page())
-        self.num_tail_pages += 1
+        self.pages.append(Page())
+        self.num_pages += 1
+        return self.num_pages
+    
+    def _append_base_page(self):
+        self.pages.insert(self.num_base_pages, Page())
+        self.num_base_pages += 1
+        self.num_pages += 1
+        return self.num_base_pages
 
-    def get_latest_tail(self):
-        latest_tail = self.tail_pages[self.num_tail_pages]
-        if not latest_tail.has_capacity():
-            self._append_tail_page()
-            latest_tail = self.tail_pages[self.num_tail_pages]
-        return latest_tail
 
-    def get_latest_base(self):
-        latest_base = self.base_pages[self.num_base_pages]
-        if not latest_base.has_capacity():
-            self._append_base_page()
-            latest_base = self.base_pages[self.num_base_pages]
-        return latest_base
+    def _write(self, val):
+        tar_pid = len(self.pages)
+        if not self.pages[tar_pid].has_capacity():
+            tar_pid = self._append_tail_page()
+        
+        offset = self.pages[tar_pid].write(val)
+        return tar_pid, offset
 
-    def lookup_latest(self, rid):
-        if rid in self.latest_lookup:
-            return 
-
-    def write(self, val):
-        latest = self.get_latest_tail()
-        offset = latest.write(val)
-        return offset
-
-    def read(self, rid):
-
+    def _read(self, rid):
+        pass
 
 class Table:
 
@@ -76,8 +67,39 @@ class Table:
         self.name = name
         self.key = key
         self.num_columns = num_columns
+
+        self.columns = [Column()] * self.num_columns
+
+        # Only goes up
+        self.next_rid = 0
+
+        # {rid: Record obj}
         self.page_directory = {}
-        pass
+
+    """
+    mask: string for debuging, will switch to bitmap
+    """
+    def update(self, rid, key, mask, cols):
+        # For each 1 in mask, call update func in that column
+        k = 0
+        pids = []
+        offsets = []
+        for i,v in enumerate(mask):
+            if v == '1':
+                pid, offset = self.columns[i]._write(cols[k])
+
+                pids.append(pid)
+                offsets.append(offset)
+
+                k += 1
+        
+        rec = Record(self._get_rid(), key, mask, pids, offsets)
+        self.page_directory[rid] = rec
+        
+                
+    def _get_rid(self):
+        self.next_rid += 1
+        return self.next_rid
 
     def __merge(self):
         pass
