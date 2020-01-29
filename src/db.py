@@ -4,6 +4,9 @@ class Database():
 
     def __init__(self):
         self.tables = []
+        # Only goes up
+        self.next_rid = 0
+        
         pass
 
     def open(self):
@@ -27,3 +30,7 @@ class Database():
     """
     def drop_table(self, name):
         pass
+
+    def _get_rid(self):
+        self.next_rid += 1
+        return self.next_rid

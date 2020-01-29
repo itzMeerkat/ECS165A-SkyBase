@@ -5,8 +5,9 @@ class Page:
     def __init__(self):
         self.num_records = 0
         self.data = bytearray(PAGE_SIZE)
-        self.free_index = [i for i in range(511, 0, -1)]
+        self.free_index = [i for i in range(511, 1, -1)]
         self.MAX_RECORDS = PAGE_SIZE / COL_SIZE
+        self.lineage = 0 # remeber to put this on the first spot in the page when flushing
 
     def has_capacity(self):
         if self.MAX_RECORDS > self.num_records:
@@ -18,6 +19,7 @@ class Page:
     TODO: benchmark of byte conversion
     '''
     def write(self, value):
+        self.lineage += 1
         insert_index = self.free_index.pop()
         l = insert_index * COL_SIZE
         r = l + COL_SIZE
