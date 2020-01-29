@@ -21,6 +21,14 @@ class Table:
         self.page_directory = {}
 
 
+    def _write_cols(self, mask, cols):
+        locs = []
+        for i, v in enumerate(mask):
+            if v == '1':
+                pid, offset = self.columns[i].write(cols[i], dest)
+                locs.append((pid, offset))
+        return locs
+
     """
     TODO: mask: string for debuging, will switch to bitmap
     mask and cols must match and fit the schema
@@ -31,21 +39,22 @@ class Table:
         dest = TO_TAIL_PAGE
         if base_rid is None:
             dest = TO_BASE_PAGE
-        
-        # Actual writing
-        for i, v in enumerate(mask):
-            if v == '1':
-                pid, offset = self.columns[i].write(cols[i], dest)
-                new_record.append_col_addr(pid, offset)
-        
-        
-        # Maintain indirection pointer
-        if not base_rid is None:
+        else:
             base_record = self.page_directory[base_rid]
             pre_rid = base_record.get_indirection()
             new_record.set_indirection(pre_rid)
             base_record.set_indirection(rid)
 
+            # Inplace update base record indirection column
+            base_ind_loc = base_record.locations[INDIRECTION_COLUMN]
+            self.columns[INDIRECTION_COLUMN].inplace_update(base_ind_loc[0], base_ind_loc[1], base_record.get_indirection())
+
+        # Combine meta cols and data cols
+        meta_and_data = new_record.meta() + cols
+        mask = '1' * META_COL_SIZE + mask
+
+        locs = self._write_cols(mask, meta_and_data)
+        new_record.locations = locs
         self.page_directory[rid] = new_record
 
 
@@ -55,7 +64,7 @@ class Table:
         for i, v in enumerate(mask):
             if v == '1':
                 tpid, offset = self.page_directory[rid]
-                r = self.columns[i].read(tpid, offset)
+                r = self.columns[i + META_COL_SIZE].read(tpid, offset)
                 res.append(r)
         return r
 

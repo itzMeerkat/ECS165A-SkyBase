@@ -41,3 +41,8 @@ class Page:
         self.free_index.append(index)
         self.num_records -= 1
         return
+
+    def inplace_update(self, offset, val):
+        l = offset * COL_SIZE
+        r = l + COL_SIZE
+        self.data[l:r] = val.to_bytes(8, 'big')

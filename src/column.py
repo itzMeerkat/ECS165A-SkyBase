@@ -12,8 +12,7 @@ class Record:
         self.timestamp = int(time.time() * 1000) #milli sec timestamp
         self.col_mask = col_mask
 
-        self.page_ids = []
-        self.offsets = []
+        self.locations = [] # contain tuples (pid, offset)
 
     def get_indirection(self):
         return self.indirection
@@ -22,9 +21,9 @@ class Record:
     def set_indirection(self, val):
         self.indirection = val
 
-    def append_col_addr(self, page_id, offset):
-        self.page_ids.append(page_id)
-        self.offsets.append(offset)
+
+    def meta(self):
+        return [self.indirection, self.rid, self.timestamp, self.col_mask]
 
 """
 TODO: free space reuse
@@ -71,3 +70,7 @@ class Column:
             return self._write_base(val)
         elif dest == TO_TAIL_PAGE:
             return self._write_tail(val)
+    
+    def inplace_update(self, pid, offset, val):
+        self.pages[pid].inplace_update(offset, val)
+
