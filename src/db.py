@@ -4,8 +4,8 @@ class Database():
 
     def __init__(self):
         self.tables = []
-        # Only goes up
-        self.next_rid = 0
+        # Only goes up, starting from 1. 0 reps none
+        self.next_rid = 1
         
         pass
 

@@ -1,4 +1,6 @@
 from .config import *
+from time import time
+from .page import Page
 
 class Record:
     '''
@@ -7,10 +9,10 @@ class Record:
     def __init__(self, rid, key, col_mask):
         self.key = key
         
-        self.indirection = None
+        self.indirection = 0
         self.rid = rid
-        self.timestamp = int(time.time() * 1000) #milli sec timestamp
-        self.col_mask = col_mask
+        self.timestamp = int(time() * 1000) #milli sec timestamp
+        self.mask = col_mask
 
         self.locations = [] # contain tuples (pid, offset)
 
@@ -19,11 +21,14 @@ class Record:
         
 
     def set_indirection(self, val):
-        self.indirection = val
+        if not val is None:
+            self.indirection = val
+        else:
+            self.indirection = 0
 
 
     def meta(self):
-        return [self.indirection, self.rid, self.timestamp, self.col_mask]
+        return [self.indirection, self.rid, self.timestamp, int(self.mask)]
 
 """
 TODO: free space reuse
@@ -48,7 +53,7 @@ class Column:
 
     def _write_tail(self, val):
         tar_pid = self.num_pages - 1
-        if not self.pages[tar_pid].has_capacity():
+        if tar_pid < 0 or (not self.pages[tar_pid].has_capacity()):
             tar_pid = self._append_tail_page()
         
         offset = self.pages[tar_pid].write(val)
@@ -59,7 +64,7 @@ class Column:
 
     def _write_base(self, val):
         tar_pid = self.num_base_pages - 1
-        if not self.pages[tar_pid].has_capacity():
+        if tar_pid < 0 or (not self.pages[tar_pid].has_capacity()):
             tar_pid = self._append_base_page()
         
         offset = self.pages[tar_pid].write(val)
