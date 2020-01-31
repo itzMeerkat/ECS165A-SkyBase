@@ -49,13 +49,15 @@ class Table:
             base_ind_loc = base_record.locations[INDIRECTION_COLUMN]
             self.columns[INDIRECTION_COLUMN].inplace_update(base_ind_loc[0], base_ind_loc[1], base_record.get_indirection())
 
-            new_base_mask = base_record.mask
+            new_base_mask = ""
             base_schema_loc = base_record.locations[SCHEMA_ENCODING_COLUMN]
             for i,v in enumerate(write_mask):
-                if v == '1':
-                    new_base_mask[i] = '1'
+                if v == '1' or base_record.mask[i] == '1':
+                    new_base_mask += "1"
 
-            self.columns[SCHEMA_ENCODING_COLUMN].inplace_update(base_schema_loc[0],base_schema_loc[1],new_base_mask)
+            print("Update mask:", new_base_mask)
+            base_record.mask = new_base_mask
+            self.columns[SCHEMA_ENCODING_COLUMN].inplace_update(base_schema_loc[0],base_schema_loc[1],int(new_base_mask))
 
 
         # Combine meta cols and data cols
@@ -76,7 +78,7 @@ class Table:
             latest = record.get_indirection()
             latest_rec = self.page_directory[latest]
 
-        #print(record.locations)
+        print(record.mask)
         for i, v in enumerate(read_mask):
             i = i + META_COL_SIZE
             if v == '1':
@@ -86,6 +88,7 @@ class Table:
 
                 # second hop needed
                 if record.mask[i - META_COL_SIZE] == '1':
+                    print("HOP")
                     tpid = latest_rec.locations[i][0]
                     offset = latest_rec.locations[i][1]
 
