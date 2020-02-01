@@ -28,7 +28,7 @@ class Record:
 
 
     def meta(self):
-        return [self.indirection, self.rid, self.timestamp, int(self.mask)]
+        return [self.indirection, self.rid, self.timestamp, self.mask.bits]
 
 """
 TODO: free space reuse

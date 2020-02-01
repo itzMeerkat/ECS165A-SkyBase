@@ -5,7 +5,7 @@ class Page:
     def __init__(self):
         self.num_records = 0
         self.data = bytearray(PAGE_SIZE)
-        self.free_index = [i for i in range(511, 1, -1)]
+        self.free_index = [i for i in range(511, 0, -1)]
         self.MAX_RECORDS = PAGE_SIZE / COL_SIZE
         self.lineage = 0 # remeber to put this on the first spot in the page when flushing
 

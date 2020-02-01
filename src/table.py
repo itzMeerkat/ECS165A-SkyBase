@@ -1,7 +1,7 @@
 from src.page import *
 from time import time
 from src.column import Column, Record
-
+from src.bits import Bits
 
 class Table:
 
@@ -22,11 +22,16 @@ class Table:
 
 
     def _write_cols(self, mask, cols, dest):
+        #print("writing", mask.bits)
         locs = []
         for i, v in enumerate(mask):
-            if v == '1':
+            #print(v)
+            if v > 0:
                 pid, offset = self.columns[i].write(cols[i], dest)
                 locs.append((pid, offset))
+            else:
+                locs.append(None)
+        #print("wrote", len(locs))
         return locs
 
     """
@@ -34,7 +39,9 @@ class Table:
     mask and cols must match and fit the schema
     """
     def put(self, rid, base_rid, key, write_mask, cols):
-        new_record = Record(rid, key, '0' * len(cols))
+        new_record = Record(rid, key, Bits('0' * len(cols)))
+
+        old_locs = None
 
         dest = TO_TAIL_PAGE
         if base_rid is None:
@@ -49,50 +56,65 @@ class Table:
             base_ind_loc = base_record.locations[INDIRECTION_COLUMN]
             self.columns[INDIRECTION_COLUMN].inplace_update(base_ind_loc[0], base_ind_loc[1], base_record.get_indirection())
 
-            new_base_mask = ""
             base_schema_loc = base_record.locations[SCHEMA_ENCODING_COLUMN]
-            for i,v in enumerate(write_mask):
-                if v == '1' or base_record.mask[i] == '1':
-                    new_base_mask += "1"
 
-            print("Update mask:", new_base_mask)
-            base_record.mask = new_base_mask
-            self.columns[SCHEMA_ENCODING_COLUMN].inplace_update(base_schema_loc[0],base_schema_loc[1],int(new_base_mask))
+            base_record.mask.merge(write_mask)
+
+            self.columns[SCHEMA_ENCODING_COLUMN].inplace_update(
+                base_schema_loc[0], base_schema_loc[1], base_record.mask)
+
+            # Merge location data
+            loc_rec = None
+            if not base_rid is None:
+                loc_rec = base_record
+            else:
+                loc_rec = self.page_directory[pre_rid]
+            
+            old_locs = loc_rec.locations
 
 
         # Combine meta cols and data cols
         meta_and_data = new_record.meta() + cols
-        write_mask = '1' * META_COL_SIZE + write_mask
 
-        locs = self._write_cols(write_mask, meta_and_data,dest)
+        # b'1111' 
+        write_mask.set_meta(15)
+        #print("Writing mask",write_mask.bits)
+        locs = self._write_cols(write_mask, meta_and_data, dest)
+
+        # Merge old and new locations
+        if dest == TO_TAIL_PAGE:
+            for i in range(len(locs)):
+                if locs[i] is None:
+                    locs[i] = old_locs[i]
+
         new_record.locations = locs
         self.page_directory[rid] = new_record
 
 
     def get(self, rid, read_mask):
-        col_num = self._get_select_num(read_mask) # we can use this to pre-allocate mem to improve performance
         res = []
         record = self.page_directory[rid]
         latest_rec = None
-        if '1' in record.mask:
+        if record.mask.bits > 0:
+            #print("NEED HOP", record.mask.bits)
             latest = record.get_indirection()
             latest_rec = self.page_directory[latest]
 
-        print(record.mask)
-        for i, v in enumerate(read_mask):
-            i = i + META_COL_SIZE
-            if v == '1':
-                #print(i)
-                tpid = record.locations[i][0]
-                offset = record.locations[i][1]
+        #print("read mask", read_mask.bits, read_mask.size)
+        for i in range(read_mask.size):
+            col_ind = i+4
+            v = read_mask[i]
+            if v > 0:
+                tpid = record.locations[col_ind][0]
+                offset = record.locations[col_ind][1]
 
                 # second hop needed
-                if record.mask[i - META_COL_SIZE] == '1':
-                    print("HOP")
-                    tpid = latest_rec.locations[i][0]
-                    offset = latest_rec.locations[i][1]
+                if record.mask[i] > 0:
+                    #print("HOP")
+                    tpid = latest_rec.locations[col_ind][0]
+                    offset = latest_rec.locations[col_ind][1]
 
-                r = self.columns[i].read(tpid, offset)
+                r = self.columns[col_ind].read(tpid, offset)
                 res.append(r)
         return res
 
