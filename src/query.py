@@ -25,7 +25,8 @@ class Query:
 
     def insert(self, *columns):
         schema_encoding = '0' * self.table.num_columns
-        pass
+        self.table.put(self.table.get_next_rid(),None,columns[0],schema_encoding,columns)
+        # pass
 
     """
     # Read a record with specified key

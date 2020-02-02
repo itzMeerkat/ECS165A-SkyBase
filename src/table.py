@@ -22,6 +22,7 @@ class Table:
         self.rid = 1
         self.lid = 1
         self.lid_rid = {}
+        self.keys = {}
 
     def get_next_rid(self):
         r = self.rid
@@ -51,12 +52,12 @@ class Table:
     """
     def put(self, rid, base_rid, key, write_mask, cols):
         new_record = Record(rid, key, Bits('0' * len(cols)))
-
         dest = TO_TAIL_PAGE
         new_lid = None
         if base_rid is None:
             dest = TO_BASE_PAGE
             new_lid = self.get_next_lid()
+            self.keys[key] = new_lid
             self.lid_rid[new_lid] = rid
         else:
             base_record = self.page_directory[base_rid]
