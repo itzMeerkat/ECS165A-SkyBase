@@ -1,6 +1,6 @@
 from .table import Table, Record
 from .index import Index
-
+from src.bits import Bits
 
 class Query:
     """
@@ -17,7 +17,8 @@ class Query:
     """
 
     def delete(self, key):
-        pass
+        self.table.setSpecialVal(key)
+        
 
     """
     # Insert a record with specified columns
@@ -25,7 +26,9 @@ class Query:
 
     def insert(self, *columns):
         schema_encoding = '0' * self.table.num_columns
-        self.table.put(self.table.get_next_rid(),None,columns[0],schema_encoding,columns)
+        print(columns.length)
+        # self.table.put(self.table.get_next_rid(),None,columns[0],schema_encoding,columns)
+        self.table.put(self.table.get_next_rid(),None,columns[0],Bits('11111'),columns)
         # pass
 
     """
@@ -40,6 +43,7 @@ class Query:
     """
 
     def update(self, key, *columns):
+
         pass
 
     """

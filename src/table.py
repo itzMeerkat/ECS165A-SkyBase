@@ -83,10 +83,10 @@ class Table:
 
         # Combine meta cols and data cols
         meta_and_data = new_record.meta() + cols
-
         # b'1111' 
         write_mask.set_meta(15)
-        #print("Writing mask",write_mask.bits)
+        print("Writing mask",write_mask.bits)
+        # print("Writing mask",write_mask.bits)
         locs = self._write_cols(write_mask, meta_and_data, dest)
 
         # Merge old and new locations
@@ -125,8 +125,18 @@ class Table:
                 r = self.columns[col_ind].read(tpid, offset)
                 res.append(r)
         return res
+    
+    
+    #After Retriving a LID for the record, then setting special val for the rids,
+    # Get ready for the merge process
 
-
+    def setSpecialVal(self, key):
+        specialVal = 999
+        delete_lid = self.keys[key]
+        self.keys[key] =  specialVal
+        self.lid_rid[999] = self.lid_rid[delete_lid] 
+        del self.lid_rid[delete_lid]
+    
     def __merge(self):
         pass
  
