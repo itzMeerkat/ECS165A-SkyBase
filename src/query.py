@@ -25,10 +25,11 @@ class Query:
     """
 
     def insert(self, *columns):
+        data = []
+        for a in columns:
+            data.append(a)
         schema_encoding = '0' * self.table.num_columns
-        print(columns.length)
-        # self.table.put(self.table.get_next_rid(),None,columns[0],schema_encoding,columns)
-        self.table.put(self.table.get_next_rid(),None,columns[0],Bits('11111'),columns)
+        self.table.put(self.table.get_next_rid(),None,data[0],Bits('11111'),data)
         # pass
 
     """
