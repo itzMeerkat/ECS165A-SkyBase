@@ -40,16 +40,18 @@ class Table:
     def put(self, rid, base_rid, key, write_mask, cols):
         new_record = Record(rid, key, Bits('0' * len(cols)))
 
-        old_locs = None
-
         dest = TO_TAIL_PAGE
         if base_rid is None:
             dest = TO_BASE_PAGE
         else:
             base_record = self.page_directory[base_rid]
             pre_rid = base_record.get_indirection()
+            if pre_rid == 0:
+                pre_rid = base_rid
             new_record.set_indirection(pre_rid)
             base_record.set_indirection(rid)
+
+            print("base, pre rid:", base_rid, pre_rid)
 
             # Inplace update base record indirection column
             base_ind_loc = base_record.locations[INDIRECTION_COLUMN]
@@ -61,15 +63,6 @@ class Table:
 
             self.columns[SCHEMA_ENCODING_COLUMN].inplace_update(
                 base_schema_loc[0], base_schema_loc[1], base_record.mask)
-
-            # Merge location data
-            loc_rec = None
-            if not base_rid is None:
-                loc_rec = base_record
-            else:
-                loc_rec = self.page_directory[pre_rid]
-            
-            old_locs = loc_rec.locations
 
 
         # Combine meta cols and data cols
@@ -84,7 +77,7 @@ class Table:
         if dest == TO_TAIL_PAGE:
             for i in range(len(locs)):
                 if locs[i] is None:
-                    locs[i] = old_locs[i]
+                    locs[i] = self.page_directory[pre_rid].locations[i]
 
         new_record.locations = locs
         self.page_directory[rid] = new_record
