@@ -19,7 +19,19 @@ class Table:
 
         # {rid: Record obj}
         self.page_directory = {}
+        self.rid = 1
+        self.lid = 1
+        self.lid_rid = {}
 
+    def get_next_rid(self):
+        r = self.rid
+        self.rid += 1
+        return r
+
+    def get_next_lid(self):
+        r = self.lid
+        self.lid += 1
+        return r
 
     def _write_cols(self, mask, cols, dest):
         #print("writing", mask.bits)
@@ -41,8 +53,11 @@ class Table:
         new_record = Record(rid, key, Bits('0' * len(cols)))
 
         dest = TO_TAIL_PAGE
+        new_lid = None
         if base_rid is None:
             dest = TO_BASE_PAGE
+            new_lid = self.get_next_lid()
+            self.lid_rid[new_lid] = rid
         else:
             base_record = self.page_directory[base_rid]
             pre_rid = base_record.get_indirection()
@@ -51,7 +66,7 @@ class Table:
             new_record.set_indirection(pre_rid)
             base_record.set_indirection(rid)
 
-            print("base, pre rid:", base_rid, pre_rid)
+            # print("base, pre rid:", base_rid, pre_rid)
 
             # Inplace update base record indirection column
             base_ind_loc = base_record.locations[INDIRECTION_COLUMN]
@@ -94,7 +109,7 @@ class Table:
 
         #print("read mask", read_mask.bits, read_mask.size)
         for i in range(read_mask.size):
-            col_ind = i+4
+            col_ind = i + 4
             v = read_mask[i]
             if v > 0:
                 tpid = record.locations[col_ind][0]
@@ -109,14 +124,6 @@ class Table:
                 r = self.columns[col_ind].read(tpid, offset)
                 res.append(r)
         return res
-
-    
-    def _get_select_num(self, mask):
-        k = 0
-        for i in mask:
-            if i == '1':
-                k += 1
-        return k
 
 
     def __merge(self):
