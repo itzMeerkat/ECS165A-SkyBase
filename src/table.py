@@ -25,7 +25,6 @@ class Table:
         #print("writing", mask.bits)
         locs = []
         for i, v in enumerate(mask):
-            #print(v)
             if v > 0:
                 pid, offset = self.columns[i].write(cols[i], dest)
                 locs.append((pid, offset))

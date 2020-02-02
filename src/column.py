@@ -35,40 +35,39 @@ TODO: free space reuse
 """
 class Column:
     def __init__(self):
-        self.pages = []
-        self.num_base_pages = 0
-        self.num_pages = 0
+        self.pages = [[],[]]
+        self.len_base = 0
+        self.len_tail = 0
 
     def _append_tail_page(self):
-        self.pages.append(Page())
-        self.num_pages += 1
-        return self.num_pages - 1
+        self.pages[1].append(Page())
+        self.len_tail += 1
+        return self.len_tail - 1
     
     def _append_base_page(self):
-        self.pages.insert(self.num_base_pages, Page())
-        self.num_base_pages += 1
-        self.num_pages += 1
-        return self.num_base_pages - 1
+        self.pages[0].append(Page())
+        self.len_base += 1
+        return self.len_base - 1
 
 
     def _write_tail(self, val):
-        tar_pid = self.num_pages - 1
-        if tar_pid < 0 or (not self.pages[tar_pid].has_capacity()):
+        tar_pid = self.len_tail - 1
+        if tar_pid < 0 or (not self.pages[1][tar_pid].has_capacity()):
             tar_pid = self._append_tail_page()
         
-        offset = self.pages[tar_pid].write(val)
-        return tar_pid, offset
+        offset = self.pages[1][tar_pid].write(val)
+        return (1,tar_pid), offset
 
     def read(self, pid, offset):
-        return self.pages[pid].read(offset)
+        return self.pages[pid[0]][pid[1]].read(offset)
 
     def _write_base(self, val):
-        tar_pid = self.num_base_pages - 1
-        if tar_pid < 0 or (not self.pages[tar_pid].has_capacity()):
+        tar_pid = self.len_base - 1
+        if tar_pid < 0 or (not self.pages[0][tar_pid].has_capacity()):
             tar_pid = self._append_base_page()
         
-        offset = self.pages[tar_pid].write(val)
-        return tar_pid, offset
+        offset = self.pages[0][tar_pid].write(val)
+        return (0,tar_pid), offset
 
     def write(self, val, dest):
         if dest == TO_BASE_PAGE:
@@ -77,5 +76,5 @@ class Column:
             return self._write_tail(val)
     
     def inplace_update(self, pid, offset, val):
-        self.pages[pid].inplace_update(offset, val)
+        self.pages[pid[0]][pid[1]].inplace_update(offset, val)
 
