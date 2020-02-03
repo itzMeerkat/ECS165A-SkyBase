@@ -63,9 +63,12 @@ class Column:
 
     def _write_base(self, val):
         tar_pid = self.len_base - 1
-        if tar_pid < 0 or (not self.pages[0][tar_pid].has_capacity()):
-            tar_pid = self._append_base_page()
         
+        if (tar_pid < 0) or (self.pages[0][tar_pid].has_capacity() is False):
+
+            tar_pid = self._append_base_page()
+            
+        #print(self.pages[0][tar_pid].has_capacity())
         offset = self.pages[0][tar_pid].write(val)
         return (0,tar_pid), offset
 

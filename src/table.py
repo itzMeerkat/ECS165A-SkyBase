@@ -15,14 +15,16 @@ class Table:
         self.key = key
         self.num_columns = num_columns
 
-        self.columns = [Column()] * (self.num_columns + META_COL_SIZE)
+        self.columns = [Column() for i in range(self.num_columns + META_COL_SIZE)]
 
         # {rid: Record obj}
         self.page_directory = {}
         self.rid = 1
         self.lid = 1
         self.lid_rid = {}
-        self.keys = {}
+        self.key_lid = {}
+
+        self.deleted_base_rid = []
 
     def get_next_rid(self):
         r = self.rid
@@ -57,7 +59,7 @@ class Table:
         if base_rid is None:
             dest = TO_BASE_PAGE
             new_lid = self.get_next_lid()
-            self.keys[key] = new_lid
+            self.key_lid[key] = new_lid
             self.lid_rid[new_lid] = rid
         else:
             base_record = self.page_directory[base_rid]
@@ -85,7 +87,7 @@ class Table:
         meta_and_data = new_record.meta() + cols
         # b'1111' 
         write_mask.set_meta(15)
-        print("Writing mask",write_mask.bits)
+        #print("Writing mask",write_mask.bits)
         # print("Writing mask",write_mask.bits)
         locs = self._write_cols(write_mask, meta_and_data, dest)
 
@@ -130,12 +132,12 @@ class Table:
     #After Retriving a LID for the record, then setting special val for the rids,
     # Get ready for the merge process
 
-    def setSpecialVal(self, key):
-        specialVal = 999
-        delete_lid = self.keys[key]
-        self.keys[key] =  specialVal
-        self.lid_rid[999] = self.lid_rid[delete_lid] 
-        del self.lid_rid[delete_lid]
+    def set_delete_flag(self, key):
+        delete_lid = self.key_lid[key]
+        delete_rid = self.lid_rid[delete_lid]
+        self.deleted_base_rid.append(delete_rid)
+        del self.key_lid[key]
+        #del self.lid_rid[delete_lid]
     
     def __merge(self):
         pass
