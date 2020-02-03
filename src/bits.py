@@ -1,5 +1,7 @@
+from typing import List
+
 class Bits:
-    def __init__(self, bits_str):
+    def __init__(self, bits_str: str):
         # bits here is in reverse order of bits_str
         self.bits = 0
         
@@ -7,6 +9,18 @@ class Bits:
         self.size = l
         for i in range(l-1,-1,-1):
             if bits_str[i] == '1':
+                self.bits |= 1
+            self.bits <<= 1
+        self.bits >>= 1
+
+    def build_from_list(self, cols: List[int]):
+        self.bits = 0
+
+        l = len(cols)
+        self.size = l
+        for i in range(l-1, -1, -1):
+            #print(i)
+            if not cols[i] is None:
                 self.bits |= 1
             self.bits <<= 1
         self.bits >>= 1

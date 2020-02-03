@@ -9,7 +9,6 @@ class Query:
 
     def __init__(self, table):
         self.table = table
-        pass
 
     """
     # internal Method
@@ -26,16 +25,25 @@ class Query:
 
     def insert(self, *columns):
         data = list(columns)
-        #schema_encoding = '0' * self.table.num_columns
-        self.table.put(self.table.get_next_rid(),None,data[self.table.key],Bits('11111'),data)
-        # pass
+        self.table.put(self.table.get_next_rid(), None, data[self.table.key], Bits('11111'), data)
 
     """
     # Read a record with specified key
     """
 
     def select(self, key, query_columns):
-        pass
+        mask = ""
+        for i in query_columns:
+            if i == 1:
+                mask+="1"
+            else:
+                mask+="0"
+        bits_mask = Bits(mask)
+
+        rid = self.table.key_to_baseRid(key)
+        r = self.table.get(rid, bits_mask)
+        return r
+
 
     """
     # Update a record with specified key and columns
@@ -43,9 +51,11 @@ class Query:
 
     def update(self, key, *columns):
         data = list(columns)
+        mask = Bits("")
+        mask.build_from_list(columns)
         base_rid = self.table.key_to_baseRid(key)
-        self.table.put(self.table.get_next_rid(),base_rid, key, Bits('11111'), data)
-        pass
+        self.table.put(self.table.get_next_rid(), base_rid, key, mask, data)
+
 
     """
     :param start_range: int         # Start of the key range to aggregate 
@@ -54,4 +64,21 @@ class Query:
     """
 
     def sum(self, start_range, end_range, aggregate_column_index):
-        pass
+        _m = [0]*self.table.num_columns
+        _m[aggregate_column_index] = 1
+        mask = ""
+        for i in _m:
+            if i == 1:
+                mask += "1"
+            else:
+                mask += "0"
+        bits_mask = Bits(mask)
+
+        res = 0
+        for i in range(start_range,end_range+1):
+            rid = self.table.key_to_baseRid(i)
+            if rid is None:
+                continue
+            r = self.table.get(rid, bits_mask)
+            res += r.columns[0]
+        return res

@@ -3,6 +3,15 @@ from time import time
 from src.column import Column, Record
 from src.bits import Bits
 
+class QueryResult:
+    def __init__(self, res):
+        self.columns = res
+    
+    def __getitem__(self, key):
+        if key==0:
+            return self
+        return None
+
 class Table:
 
     """
@@ -126,13 +135,17 @@ class Table:
 
                 r = self.columns[col_ind].read(tpid, offset)
                 res.append(r)
-        return res
+        
+        rt = QueryResult(res)
+        return rt
     
     
     #After Retriving a LID for the record, then setting special val for the rids,
     # Get ready for the merge process
 
     def key_to_baseRid(self,key):
+        if not key in self.key_lid:
+            return None
         lid = self.key_lid[key]
         return self.lid_rid[lid]
 
