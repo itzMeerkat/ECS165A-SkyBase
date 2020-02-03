@@ -136,6 +136,10 @@ class Table:
         self.keys[key] =  specialVal
         self.lid_rid[999] = self.lid_rid[delete_lid] 
         del self.lid_rid[delete_lid]
+
+    def key_to_baseRid(self,key):
+        lid = self.keys[key]
+        return self.lid_rid[lid]
     
     def __merge(self):
         pass
