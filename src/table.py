@@ -132,6 +132,10 @@ class Table:
     #After Retriving a LID for the record, then setting special val for the rids,
     # Get ready for the merge process
 
+    def key_to_baseRid(self,key):
+        lid = self.keys[key]
+        return self.lid_rid[lid]
+
     def set_delete_flag(self, key):
         delete_lid = self.key_lid[key]
         delete_rid = self.lid_rid[delete_lid]

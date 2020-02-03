@@ -42,7 +42,11 @@ class Query:
     """
 
     def update(self, key, *columns):
-
+        data = []
+        for a in columns:
+            data.append(a)
+        base_rid = self.table.key_to_baseRid(key)
+        self.table.put(self.table.get_next_rid(),base_rid, key, Bits('11111'), data)
         pass
 
     """
