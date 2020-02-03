@@ -17,7 +17,7 @@ class Query:
     """
 
     def delete(self, key):
-        self.table.setSpecialVal(key)
+        self.table.set_delete_flag(key)
         
 
     """
@@ -25,11 +25,9 @@ class Query:
     """
 
     def insert(self, *columns):
-        data = []
-        for a in columns:
-            data.append(a)
-        schema_encoding = '0' * self.table.num_columns
-        self.table.put(self.table.get_next_rid(),None,data[0],Bits('11111'),data)
+        data = list(columns)
+        #schema_encoding = '0' * self.table.num_columns
+        self.table.put(self.table.get_next_rid(),None,data[self.table.key],Bits('11111'),data)
         # pass
 
     """

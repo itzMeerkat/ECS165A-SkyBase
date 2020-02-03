@@ -20,6 +20,4 @@ print(r3)
 
 query.delete(1)
 query.delete(2)
-print("After deletion record1's LID: ", table.keys[1])
-print("After deletion record2's LID: ", table.keys[2])
-print("record3's LID: ", table.keys[3])
+print("record3's LID: ", table.key_lid[3])
