@@ -133,7 +133,7 @@ class Table:
     # Get ready for the merge process
 
     def key_to_baseRid(self,key):
-        lid = self.keys[key]
+        lid = self.key_lid[key]
         return self.lid_rid[lid]
 
     def set_delete_flag(self, key):
