@@ -3,10 +3,7 @@ from .table import Table
 class Database():
 
     def __init__(self):
-        self.tables = []
-        # Only goes up, starting from 1. 0 reps none
-        self.next_rid = 1
-        
+        self.tables = []    
         pass
 
     def open(self):

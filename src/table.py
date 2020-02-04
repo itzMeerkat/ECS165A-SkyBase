@@ -50,8 +50,9 @@ class Table:
     def _write_cols(self, mask, cols, dest):
         #print("writing", mask.bits)
         locs = []
-        for i, v in enumerate(mask):
-            if v > 0:
+        l = mask.size
+        for i in range(l):
+            if mask[i] > 0:
                 pid, offset = self.columns[i].write(cols[i], dest)
                 locs.append((pid, offset))
             else:

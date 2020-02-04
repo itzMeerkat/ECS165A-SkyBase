@@ -13,7 +13,7 @@ class Record:
         self.rid = rid
         self.timestamp = int(time() * 1000) #milli sec timestamp
         self.mask = col_mask
-
+        self.meta_data = None
         self.locations = [] # contain tuples (pid, offset)
 
     def get_indirection(self):
@@ -28,7 +28,9 @@ class Record:
 
 
     def meta(self):
-        return [self.indirection, self.rid, self.timestamp, self.mask.bits]
+        if self.meta_data is None:
+            self.meta_data = [self.indirection, self.rid, self.timestamp, self.mask.bits]
+        return self.meta_data
 
 """
 TODO: free space reuse
@@ -40,6 +42,7 @@ class Column:
         self.len_tail = 0
 
     def _append_tail_page(self):
+        #print("TAIL")
         self.pages[1].append(Page())
         self.len_tail += 1
         return self.len_tail - 1
@@ -52,14 +55,18 @@ class Column:
 
     def _write_tail(self, val):
         tar_pid = self.len_tail - 1
-        if tar_pid < 0 or (not self.pages[1][tar_pid].has_capacity()):
+        if (tar_pid < 0) or (self.pages[1][tar_pid].has_capacity() is False):
             tar_pid = self._append_tail_page()
         
         offset = self.pages[1][tar_pid].write(val)
-        return (1,tar_pid), offset
+        r_pid = (tar_pid << 1) | 1
+        return r_pid, offset
 
     def read(self, pid, offset):
-        return self.pages[pid[0]][pid[1]].read(offset)
+        bt = pid & 1
+        pid >>= 1
+        #print(bt, pid)
+        return self.pages[bt][pid].read(offset)
 
     def _write_base(self, val):
         tar_pid = self.len_base - 1
@@ -70,7 +77,8 @@ class Column:
             
         #print(self.pages[0][tar_pid].has_capacity())
         offset = self.pages[0][tar_pid].write(val)
-        return (0,tar_pid), offset
+        r_pid = (tar_pid << 1)
+        return r_pid, offset
 
     def write(self, val, dest):
         if dest == TO_BASE_PAGE:
@@ -79,5 +87,7 @@ class Column:
             return self._write_tail(val)
     
     def inplace_update(self, pid, offset, val):
-        self.pages[pid[0]][pid[1]].inplace_update(offset, val)
+        bt = pid & 1
+        pid >>= 1
+        self.pages[bt][pid].inplace_update(offset, val)
 

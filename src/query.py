@@ -41,6 +41,7 @@ class Query:
         bits_mask = Bits(mask)
 
         rid = self.table.key_to_baseRid(key)
+        #print(key, rid)
         r = self.table.get(rid, bits_mask)
         return r
 
