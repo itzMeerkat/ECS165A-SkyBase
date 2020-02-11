@@ -42,7 +42,6 @@ class Column:
         self.len_tail = 0
 
     def _append_tail_page(self):
-        #print("TAIL")
         self.pages[1].append(Page())
         self.len_tail += 1
         return self.len_tail - 1
@@ -78,6 +77,7 @@ class Column:
         #print(self.pages[0][tar_pid].has_capacity())
         offset = self.pages[0][tar_pid].write(val)
         r_pid = (tar_pid << 1)
+
         return r_pid, offset
 
     def write(self, val, dest):

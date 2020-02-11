@@ -9,6 +9,10 @@ class Page:
         self.MAX_RECORDS = PAGE_SIZE / COL_SIZE - 1
         self.lineage = 0 # remeber to put this on the first spot in the page when flushing
 
+        #field used in bufferpool
+        self.pirLcount = 0
+        self.dirty = False
+
     def has_capacity(self):
         if self.MAX_RECORDS > self.num_records:
             return True
