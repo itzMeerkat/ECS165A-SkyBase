@@ -14,7 +14,7 @@ class Database():
         return self.bufferpool
 
     def close(self):
-        pass
+        self.bufferpool.write_back_all_dirty_page()
 
     """
     # Creates a new table
