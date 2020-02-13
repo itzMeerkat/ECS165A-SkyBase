@@ -53,11 +53,11 @@ class Bufferpool:
     def release_one_page(self):  
         res=self._pop_tail()
         self._remove_node(res)
+        del self.cache[res.key]
         if(res.dirty==True):
             #write into disk
             res.dirty=False
         self.num_pages-=1
-        pass
 
     def get(self,pid):        #get a page from bufferpool
         node = self.cache.get(pid)
