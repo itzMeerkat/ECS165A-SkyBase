@@ -1,16 +1,20 @@
 from .table import Table
+from .bufferpool import *
 
 class Database():
 
     def __init__(self):
-        self.tables = []    
+        self.tables = []
+        self.next_rid = 0 #???    
+        self.bufferpool = None
         pass
 
     def open(self):
-        pass
+        self.bufferpool = Bufferpool()
+        return self.bufferpool
 
     def close(self):
-        pass
+        self.bufferpool.write_back_all_dirty_page()
 
     """
     # Creates a new table
@@ -28,6 +32,9 @@ class Database():
     def drop_table(self, name):
         pass
 
+    #???
     def _get_rid(self):
         self.next_rid += 1
         return self.next_rid
+
+    
