@@ -9,10 +9,10 @@ class Database():
         pass
 
     def open(self):
-        return self.bufferpool
+        pass
 
     def close(self):
-        self.bufferpool.write_back_all_dirty_page()
+        pass
 
     """
     # Creates a new table
