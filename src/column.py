@@ -1,6 +1,7 @@
 from .config import *
 from time import time
 from .page import Page
+from .bufferpool import Bufferpool
 
 class Record:
     '''
@@ -15,6 +16,7 @@ class Record:
         self.mask = col_mask
         self.meta_data = None
         self.locations = [] # contain tuples (pid, offset)
+        self.bufferpool=None
 
     def get_indirection(self):
         return self.indirection
@@ -36,10 +38,11 @@ class Record:
 TODO: free space reuse
 """
 class Column:
-    def __init__(self):
+    def __init__(self,bufferpool):
         self.pages = [[],[]]
         self.len_base = 0
         self.len_tail = 0
+        self.bufferpool = bufferpool
 
     def _append_tail_page(self):
         self.pages[1].append(Page())
@@ -66,6 +69,8 @@ class Column:
         pid >>= 1
         #print(bt, pid)
         return self.pages[bt][pid].read(offset)
+        
+        #return pid,bt
 
     def _write_base(self, val):
         tar_pid = self.len_base - 1

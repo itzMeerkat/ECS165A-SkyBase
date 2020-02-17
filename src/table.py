@@ -2,6 +2,7 @@ from src.page import *
 from time import time
 from src.column import Column, Record
 from src.bits import Bits
+from .bufferpool import Bufferpool
 
 class QueryResult:
     def __init__(self, res):
@@ -26,7 +27,8 @@ class Table:
         self.key = key
         self.num_columns = num_columns
 
-        self.columns = [Column() for i in range(self.num_columns + META_COL_SIZE)]
+        self.bufferpool = Bufferpool()
+        self.columns = [Column(self.bufferpool) for i in range(self.num_columns + META_COL_SIZE)]
 
         # {rid: Record obj}
         self.page_directory = {}

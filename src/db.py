@@ -6,11 +6,9 @@ class Database():
     def __init__(self):
         self.tables = []
         self.next_rid = 0 #???    
-        self.bufferpool = None
         pass
 
     def open(self):
-        self.bufferpool = Bufferpool()
         return self.bufferpool
 
     def close(self):
