@@ -3,14 +3,15 @@ from .page import Page
 
 class Bufferpool:
 
-    def __init__(self):
+    def __init__(self, bp_handler, tp_handler):
         self.cache={}
         self.dirty_pages=set()     
         self.head=DLinkedNode(-1)
         self.tail=DLinkedNode(-2)
         self.head.next=self.tail 
         self.tail.prev=self.head
-
+        self.bp_handler = bp_handler
+        self.tp_handler = tp_handler
         self.num_pages=0
         self.capacity = BUFFERPOOL_SIZE
 

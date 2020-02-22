@@ -47,3 +47,5 @@ class Page:
         l = offset * COL_SIZE
         r = l + COL_SIZE
         self.data[l:r] = val.to_bytes(8, 'big')
+
+    
