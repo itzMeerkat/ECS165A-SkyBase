@@ -67,12 +67,14 @@ class Bufferpool:
         self.num_pages-=1
         return SUCCESS
 
-    def get(self,pid):        #get a page from bufferpool
+    def get(self,pid,offset):        #get a page from bufferpool
         node = self.cache.get(pid)
         if not node:
+            self.read_from_disk(pid,offset)
             return FAIL
-        self._move_to_head(node)
-        return node.key
+        else:
+            self._move_to_head(node)
+            return node.key
 
     def pin(self,pid):
         node = self.cache.get(pid)
@@ -97,7 +99,7 @@ class Bufferpool:
     def flush_to_disk(self,pid):
         pass
 
-    def read_from_disk(self,pid):
+    def read_from_disk(self,pid,offset):
         pass
 
 

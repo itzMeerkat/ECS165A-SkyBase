@@ -68,7 +68,7 @@ class Column:
         bt = pid & 1
         pid >>= 1
         #print(bt, pid)
-        return self.pages[bt][pid].read(offset)
+        return self.bufferpool.get(pid,offset)
         
         #return pid,bt
 
