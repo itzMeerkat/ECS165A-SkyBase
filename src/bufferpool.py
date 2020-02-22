@@ -105,6 +105,7 @@ class Bufferpool:
 class DLinkedNode:
     def __init__(self,key):
         self.key=key
+        self.data=None #data supposed to be page. will be fixed future
         self.pirLcount=0   
         self.next=None 
         self.prev=None
