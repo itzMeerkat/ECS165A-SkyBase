@@ -95,7 +95,7 @@ class Bufferpool:
     def write_back_all_dirty_page(self):
         for page_id in self.dirty_pages:
             self.dirty_pages.remove(page_id)
-            flush_to_disk(pid)
+            self.flush_to_disk(pid)
 
     def flush_to_disk(self,pid):
         data_array = self.cache[pid].data
@@ -111,7 +111,7 @@ class Bufferpool:
 
         #first need to look for the pid in the metadata file of the given base page or tail page file
         search_pid = "(" + str(pid) + ","
-        begin_index = meta_handler.read().find(search_pid)
+        begin = meta_handler.read().find(search_pid)
         if begin == -1:
             f_handler.seek(0,2)
             meta_handler.write(pid + str(f_handler.tell()) + ")")
@@ -121,7 +121,7 @@ class Bufferpool:
             meta_handler.seek(begin)
             file_index = meta_handler.read(end).split(",")[1]
             f_handler.seek(int(file_index))
-        file_handler.write("".join(map(str, data_array)))
+        f_handler.write("".join(map(str, data_array)))
 
         
 
