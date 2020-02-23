@@ -1,17 +1,17 @@
+import os
 from .config import *
 from .page import Page
 
 class Bufferpool:
 
-    def __init__(self, bp_handler, tp_handler):
+    def __init__(self, file_handler):
         self.cache={}
         self.dirty_pages=set()     
         self.head=DLinkedNode(-1)
         self.tail=DLinkedNode(-2)
         self.head.next=self.tail 
         self.tail.prev=self.head
-        self.bp_handler = bp_handler
-        self.tp_handler = tp_handler
+        self.file_handler = file_handler
         self.num_pages=0
         self.capacity = BUFFERPOOL_SIZE
 
@@ -95,10 +95,35 @@ class Bufferpool:
     def write_back_all_dirty_page(self):
         for page_id in self.dirty_pages:
             self.dirty_pages.remove(page_id)
-            #write_back_to_page
+            flush_to_disk(pid)
 
     def flush_to_disk(self,pid):
-        pass
+        data_array = self.cache[pid].data
+        fh_index = 0
+        #check if tail or base pid
+        if pid > ((1 << 32) - 1):
+            fh_index = 1
+        #seek the meta data and data file to the beginning of the file
+        meta_handler = self.file_handler[fh_index] #meta data
+        f_handler = self.file_handler[fh_index+2] #actual file
+        meta_handler.seek(0)
+        f_handler.seek(0)
+
+        #first need to look for the pid in the metadata file of the given base page or tail page file
+        search_pid = "(" + str(pid) + ","
+        begin_index = meta_handler.read().find(search_pid)
+        if begin == -1:
+            f_handler.seek(0,2)
+            meta_handler.write(pid + str(f_handler.tell()) + ")")
+        else:
+            meta_handler.seek(begin)
+            end = meta_handler.read().find(")")
+            meta_handler.seek(begin)
+            file_index = meta_handler.read(end).split(",")[1]
+            f_handler.seek(int(file_index))
+        file_handler.write("".join(map(str, data_array)))
+
+        
 
     def read_from_disk(self,pid,offset):
         pass
