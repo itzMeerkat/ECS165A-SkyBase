@@ -22,12 +22,12 @@ class Table:
     :param num_columns: int     #Number of Columns: all columns are integer
     :param key: int             #Index of table key in columns
     """
-    def __init__(self, name, num_columns, key):
+    def __init__(self, name, num_columns, key, bp_handler, tp_handler):
         self.name = name
         self.key = key
         self.num_columns = num_columns
 
-        self.bufferpool = Bufferpool()
+        self.bufferpool = Bufferpool(bp_handler, tp_handler)
         self.columns = [Column(self.bufferpool) for i in range(self.num_columns + META_COL_SIZE)]
 
         # {rid: Record obj}
