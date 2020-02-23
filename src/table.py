@@ -49,13 +49,13 @@ class Table:
         self.lid += 1
         return r
 
-    def _write_cols(self, mask, cols, dest):
+    def _write_cols(self, mask, cols, dest, old_loc):
         #print("writing", mask.bits)
         locs = []
         l = mask.size
         for i in range(l):
             if mask[i] > 0:
-                pid, offset = self.columns[i].write(cols[i], dest)
+                pid, offset = self.columns[i].write(cols[i], dest, old_loc[i][0])
                 locs.append((pid, offset))
             else:
                 locs.append(None)
@@ -70,6 +70,7 @@ class Table:
         new_record = Record(rid, key, Bits('0' * len(cols)))
         dest = TO_TAIL_PAGE
         new_lid = None
+        old_loc = None
         if base_rid is None:
             dest = TO_BASE_PAGE
             new_lid = self.get_next_lid()
@@ -77,6 +78,7 @@ class Table:
             self.lid_rid[new_lid] = rid
         else:
             base_record = self.page_directory[base_rid]
+            old_loc = base_record.locations
             pre_rid = base_record.get_indirection()
             if pre_rid == 0:
                 pre_rid = base_rid
@@ -103,7 +105,7 @@ class Table:
         write_mask.set_meta(15)
         #print("Writing mask",write_mask.bits)
         # print("Writing mask",write_mask.bits)
-        locs = self._write_cols(write_mask, meta_and_data, dest)
+        locs = self._write_cols(write_mask, meta_and_data, dest, old_loc)
 
         # Merge old and new locations
         if dest == TO_TAIL_PAGE:

@@ -61,7 +61,7 @@ class Column:
     def _write_tail(self, val, base_group):
         tar_pid = self.build_pid(base_group, self.len_tail[base_group])
         if (self.len_tail[base_group] <= 0) or (self.tail_pages[tar_pid].has_capacity() is False):
-            tar_pid = self._append_tail_page()
+            tar_pid = self._append_tail_page(base_group)
         
         offset = self.tail_pages[tar_pid].write(val)
         return tar_pid, offset
@@ -87,11 +87,11 @@ class Column:
 
         return tar_pid, offset
 
-    def write(self, val, dest):
+    def write(self, val, dest, base_pid):
         if dest == TO_BASE_PAGE:
             return self._write_base(val)
         elif dest == TO_TAIL_PAGE:
-            return self._write_tail(val)
+            return self._write_tail(val, self.base_pid_to_group(base_pid))
     
     def inplace_update(self, pid, offset, val):
         # TODO: This should be taken over by buffer pool
@@ -105,3 +105,7 @@ class Column:
         if pid > ((1 << 32) - 1):
             return True
         return False
+
+
+    def base_pid_to_group(self, base_pid):
+        return int(base_pid / PARTITION_SIZE)
