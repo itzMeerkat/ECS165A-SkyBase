@@ -95,7 +95,7 @@ class Bufferpool:
     def write_back_all_dirty_page(self):
         for page_id in self.dirty_pages:
             self.dirty_pages.remove(page_id)
-            self.flush_to_disk(pid)
+            self.flush_to_disk(page_id)
 
     def flush_to_disk(self,pid):
         data_array = self.cache[pid].data
