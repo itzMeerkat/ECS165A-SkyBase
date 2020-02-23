@@ -39,34 +39,36 @@ TODO: free space reuse
 """
 class Column:
     def __init__(self,bufferpool):
-        self.pages = [[],[]]
+        self.base_pages = []
+        self.tail_pages = {} # pid: Page()
         self.len_base = 0
-        self.len_tail = 0
+        self.len_tail = []
         self.bufferpool = bufferpool
 
-    def _append_tail_page(self):
-        self.pages[1].append(Page())
-        self.len_tail += 1
-        return self.len_tail - 1
+    def _append_tail_page(self, base_group):
+        pid = self.build_pid(base_group, self.len_tail[base_group] + 1)
+        self.tail_pages[pid] = Page()
+        self.len_tail[base_group] += 1
+        return pid
     
     def _append_base_page(self):
-        self.pages[0].append(Page())
+        self.base_pages.append(Page())
+        self.len_tail.append(0)
         self.len_base += 1
         return self.len_base - 1
 
 
-    def _write_tail(self, val):
-        tar_pid = self.len_tail - 1
-        if (tar_pid < 0) or (self.pages[1][tar_pid].has_capacity() is False):
+    def _write_tail(self, val, base_group):
+        tar_pid = self.build_pid(base_group, self.len_tail[base_group])
+        if (self.len_tail[base_group] <= 0) or (self.tail_pages[tar_pid].has_capacity() is False):
             tar_pid = self._append_tail_page()
         
-        offset = self.pages[1][tar_pid].write(val)
-        r_pid = (tar_pid << 1) | 1
-        return r_pid, offset
+        offset = self.tail_pages[tar_pid].write(val)
+        return tar_pid, offset
 
     def read(self, pid, offset):
-        bt = pid & 1
-        pid >>= 1
+        #bt = pid & 1
+        #pid >>= 1
         #print(bt, pid)
         return self.bufferpool.get(pid,offset)
         
@@ -75,15 +77,13 @@ class Column:
     def _write_base(self, val):
         tar_pid = self.len_base - 1
         
-        if (tar_pid < 0) or (self.pages[0][tar_pid].has_capacity() is False):
-
+        if (tar_pid < 0) or (self.base_pages[tar_pid].has_capacity() is False):
             tar_pid = self._append_base_page()
             
         #print(self.pages[0][tar_pid].has_capacity())
-        offset = self.pages[0][tar_pid].write(val)
-        r_pid = (tar_pid << 1)
+        offset = self.base_pages[tar_pid].write(val)
 
-        return r_pid, offset
+        return tar_pid, offset
 
     def write(self, val, dest):
         if dest == TO_BASE_PAGE:
@@ -92,7 +92,14 @@ class Column:
             return self._write_tail(val)
     
     def inplace_update(self, pid, offset, val):
-        bt = pid & 1
-        pid >>= 1
-        self.pages[bt][pid].inplace_update(offset, val)
+        # TODO: This should be taken over by buffer pool
+        #self.pages[bt][pid].inplace_update(offset, val)
+        pass
 
+    def build_pid(self, base_group, index):
+        return ((base_group + 1) << 32) | (index & ((1 << 32) - 1))
+    
+    def is_tail_pid(self, pid):
+        if pid > ((1 << 32) - 1):
+            return True
+        return False
