@@ -118,18 +118,46 @@ class Bufferpool:
         f_handler.write("".join(map(str, data_array)))
 
         
-
     def read_from_disk(self,pid):
-        pass
-
+        #Create a new node and update with cache
+        bt = 0
+        if pid > ((1 << 32 -1)):
+            bt = 1
+        meta_handler = self.file_handler[bt] #Meta data file handler
+        f_handler = self.file_handler[bt+2] #Base/tail Data file handler 
+        meta_handler.seek(0)
+        f_handler.seek(0)
+        search_pid = "(" + str(pid) + ","
+        begin = meta_handler.read().find(search_pid) #Look for pid in meta
+        if begin == -1:
+            return FAIL
+        meta_handler.seek(begin)
+        end = meta_handler.read().find(")")
+        meta_handler.seek(begin)
+        file_index = meta_handler.read(end).split(",")[1]
+        f_handler.seek(int(file_index))
+        data_array = f_handler.read(4096)
+        self.add_page_from_disk(pid,data_array)
+    
+    def add_page_from_disk(self,pid,data):
+        # self.cache[pid] = data
+        if(self.has_capacity() is False):
+            sign=self._release_one_page()
+            if(sign == -1):
+                return FAIL  
+        node = DLinkedNode(pid,data)
+        node.key = pid
+        self.cache[pid] = node
+        self._add_to_head(node)
+        self.num_pages+=1
 
 #use pid as key of DLinkedNode
 class DLinkedNode:
-    def __init__(self,key):
+    def __init__(self,key,data):
         self.key=key
-        self.data=None #data supposed to be page. will be fixed future
-        self.pirLcount=0   
-        self.next=None 
+        self.data=data #data supposed to be page (data_array)
+        self.pirLcount=0  
+        self.next=None
         self.prev=None
 
 
