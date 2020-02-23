@@ -70,7 +70,9 @@ class Column:
         #bt = pid & 1
         #pid >>= 1
         #print(bt, pid)
-        return self.bufferpool.get(pid,offset)
+        val = self.bufferpool.get(pid).read(offset)
+        self.bufferpool.unpin(pid)
+        return val
         
         #return pid,bt
 

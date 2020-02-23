@@ -39,6 +39,8 @@ class Bufferpool:
         return res
     #function operate Double Linked List ends
 
+    def new_page(self):
+        pass
     
     def add_page(self,pid):   #put a page into bufferpool
         #node = self.cache.get(pid)
@@ -68,25 +70,17 @@ class Bufferpool:
         self.num_pages-=1
         return SUCCESS
 
-    def get(self,pid,offset):        #get a page from bufferpool
+    def get(self,pid):        #get a page from bufferpool
         node = self.cache.get(pid)
         if not node:
-            self.read_from_disk(pid,offset)
-            return FAIL
+            return self.read_from_disk(pid)
         else:
+            node.pirLcount+=1   #pin this page
             self._move_to_head(node)
             return node.key
 
-    def pin(self,pid):
-        node = self.cache.get(pid)
-        #if not node:
-            #error
-        node.pirLcount += 1
-
     def unpin(self,pid):
         node = self.cache.get(pid)
-        #if not node:
-            #error
         node.pirLcount -= 1
 
     def has_capacity(self):
@@ -125,7 +119,7 @@ class Bufferpool:
 
         
 
-    def read_from_disk(self,pid,offset):
+    def read_from_disk(self,pid):
         pass
 
 
