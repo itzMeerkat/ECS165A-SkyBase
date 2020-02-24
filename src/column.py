@@ -67,10 +67,14 @@ class Column:
         return tar_pid, offset
 
     def read(self, pid, offset):
+        if self.is_tail_pid(pid):
+            return self.tail_pages[pid].read(offset)
+        else:
+            return self.base_pages[pid].read(offset)
         #bt = pid & 1
         #pid >>= 1
         #print(bt, pid)
-        return self.bufferpool.get(pid,offset)
+        #return self.bufferpool.get(pid,offset)
         
         #return pid,bt
 
@@ -93,8 +97,11 @@ class Column:
     
     def inplace_update(self, pid, offset, val):
         # TODO: This should be taken over by buffer pool
-        #self.pages[bt][pid].inplace_update(offset, val)
-        pass
+        if self.is_tail_pid(pid):
+            self.tail_pages[pid].inplace_update(offset, val)
+        else:
+            self.base_pages[pid].inplace_update(offset, val)
+        #pass
 
     def build_pid(self, base_group, index):
         return ((base_group + 1) << 32) | (index & ((1 << 32) - 1))
