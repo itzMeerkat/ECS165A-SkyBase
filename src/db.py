@@ -7,32 +7,45 @@ class Database():
     def __init__(self):
         self.tables = []
         self.next_rid = 0 #???
-        self.bp_handler = None
-        self.tp_handler = None
+        self.file_handler = []
         pass
 
     def open(self, db_name):
         file_path = db_name.replace("~/", "")
-        base_page_file = file_path + "_base_page_file"
-        tail_page_file = file_path + "_tail_page_file"
-        try:
-            bp_handler = open(self.base_page_file, 'a+')
-        except IOError:
-        # If not exists, create the file
-            bp_handler = open(self.base_page_file, 'w+')
+        bp_meta = file_path + "_bp_meta"
+        tp_meta = file_path + "_tp_meta"
+        bp_file = file_path + "_bp"
+        tp_file = file_path + "_tp"
 
         try:
-            tp_handler = open(self.tail_page_file, 'a+')
+            bp_meta_handler = open(bp_meta, 'r+')
         except IOError:
         # If not exists, create the file
-            tp_handler = open(self.tail_page_file, 'w+')
+            bp_meta_handler = open(bp_meta, 'w+')
 
-        self.bp_handler = bp_handler
-        self.tp_handler = tp_handler
+        try:
+            tp_meta_handler = open(tp_meta, 'r+')
+        except IOError:
+        # If not exists, create the file
+            tp_meta_handler = open(tp_meta, 'w+')
+
+        try:
+            bp_handler = open(bp_file, 'r+')
+        except IOError:
+        # If not exists, create the file
+            bp_handler = open(bp_file, 'w+')
+
+        try:
+            tp_handler = open(tp_file, 'r+')
+        except IOError:
+        # If not exists, create the file
+            tp_handler = open(tp_file, 'w+')
+
+        self.file_handler = [bp_meta_handler, tp_meta_handler, bp_handler, tp_handler]
 
     def close(self):
-        self.bp_handler.close()
-        self.tp_handler.close()
+        for handler in self.file_handler:
+            handler.close()
 
     """
     # Creates a new table
@@ -41,7 +54,7 @@ class Database():
     :param key: int             #Index of table key in columns
     """
     def create_table(self, name, num_columns, key):
-        table = Table(name, num_columns, key, self.bp_handler, self.tp_handler)
+        table = Table(name, num_columns, key, self.file_handler)
         return table
 
     """

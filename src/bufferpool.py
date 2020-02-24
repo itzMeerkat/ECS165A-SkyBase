@@ -1,17 +1,17 @@
+import os
 from .config import *
 from .page import Page
 
 class Bufferpool:
 
-    def __init__(self, bp_handler, tp_handler):
+    def __init__(self, file_handler):
         self.cache={}
         self.dirty_pages=set()     
         self.head=DLinkedNode(-1)
         self.tail=DLinkedNode(-2)
         self.head.next=self.tail 
         self.tail.prev=self.head
-        self.bp_handler = bp_handler
-        self.tp_handler = tp_handler
+        self.file_handler = file_handler
         self.num_pages=0
         self.capacity = BUFFERPOOL_SIZE
 
@@ -39,6 +39,9 @@ class Bufferpool:
         return res
     #function operate Double Linked List ends
 
+    def new_page(self,pid):
+        node = DLinkedNode(pid,Page())
+        self._move_to_head(node)
     
     def add_page(self,pid):   #put a page into bufferpool
         #node = self.cache.get(pid)
@@ -68,26 +71,24 @@ class Bufferpool:
         self.num_pages-=1
         return SUCCESS
 
-    def get(self,pid,offset):        #get a page from bufferpool
+    def get(self,pid):        #get a page from bufferpool
         node = self.cache.get(pid)
         if not node:
-            self.read_from_disk(pid,offset)
-            return FAIL
+            return self.read_from_disk(pid)
         else:
+            node.pirLcount+=1   #pin this page
             self._move_to_head(node)
-            return node.key
+            return node.data
 
-    def pin(self,pid):
+    """
+    when read and write finish, should unpin page. If it's write, it should make this page dirty
+    """
+    def access_finish(self,pid,signal): #signal == 1: write; signal == 0: read
         node = self.cache.get(pid)
-        #if not node:
-            #error
-        node.pirLcount += 1
-
-    def unpin(self,pid):
-        node = self.cache.get(pid)
-        #if not node:
-            #error
-        node.pirLcount -= 1
+        if(signal == 1):
+            node.dirty = True
+            self.dirty_pages.add(node.key)
+        node.pirLcount -= 1  #unpin this page
 
     def has_capacity(self):
         return self.num_pages < self.capacity
@@ -95,22 +96,76 @@ class Bufferpool:
     def write_back_all_dirty_page(self):
         for page_id in self.dirty_pages:
             self.dirty_pages.remove(page_id)
-            #write_back_to_page
+            self.flush_to_disk(page_id)
 
     def flush_to_disk(self,pid):
-        pass
+        data_array = self.cache[pid].data
+        fh_index = 0
+        #check if tail or base pid
+        if pid > ((1 << 32) - 1):
+            fh_index = 1
+        #seek the meta data and data file to the beginning of the file
+        meta_handler = self.file_handler[fh_index] #meta data
+        f_handler = self.file_handler[fh_index+2] #actual file
+        meta_handler.seek(0)
+        f_handler.seek(0)
 
-    def read_from_disk(self,pid,offset):
-        pass
+        #first need to look for the pid in the metadata file of the given base page or tail page file
+        search_pid = "(" + str(pid) + ","
+        begin = meta_handler.read().find(search_pid)
+        if begin == -1:
+            f_handler.seek(0,2)
+            meta_handler.write(pid + str(f_handler.tell()) + ")")
+        else:
+            meta_handler.seek(begin)
+            end = meta_handler.read().find(")")
+            meta_handler.seek(begin)
+            file_index = meta_handler.read(end).split(",")[1]
+            f_handler.seek(int(file_index))
+        f_handler.write("".join(map(str, data_array)))
 
+        
+    def read_from_disk(self,pid):
+        #Create a new node and update with cache
+        bt = 0
+        if pid > ((1 << 32 -1)):
+            bt = 1
+        meta_handler = self.file_handler[bt] #Meta data file handler
+        f_handler = self.file_handler[bt+2] #Base/tail Data file handler 
+        meta_handler.seek(0)
+        f_handler.seek(0)
+        search_pid = "(" + str(pid) + ","
+        begin = meta_handler.read().find(search_pid) #Look for pid in meta
+        if begin == -1:
+            return FAIL
+        meta_handler.seek(begin)
+        end = meta_handler.read().find(")")
+        meta_handler.seek(begin)
+        file_index = meta_handler.read(end).split(",")[1]
+        f_handler.seek(int(file_index))
+        data_array = f_handler.read(4096)
+        self.add_page_from_disk(pid,data_array)
+    
+    def add_page_from_disk(self,pid,data):
+        # self.cache[pid] = data
+        if(self.has_capacity() is False):
+            sign=self._release_one_page()
+            if(sign == -1):
+                return FAIL  
+        node = DLinkedNode(pid,data)
+        node.key = pid
+        self.cache[pid] = node
+        self._add_to_head(node)
+        self.num_pages+=1
 
 #use pid as key of DLinkedNode
 class DLinkedNode:
-    def __init__(self,key):
+    def __init__(self,key,data):
         self.key=key
-        self.data=None #data supposed to be page. will be fixed future
-        self.pirLcount=0   
-        self.next=None 
+        self.data=data #data supposed to be page (data_array)
+        self.dirty = False
+        self.pirLcount=0  
+        self.next=None
         self.prev=None
 
 
