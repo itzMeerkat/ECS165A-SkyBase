@@ -39,8 +39,9 @@ class Bufferpool:
         return res
     #function operate Double Linked List ends
 
-    def new_page(self):
-        pass
+    def new_page(self,pid):
+        node = DLinkedNode(pid,Page())
+        self._move_to_head(node)
     
     def add_page(self,pid):   #put a page into bufferpool
         #node = self.cache.get(pid)
@@ -77,11 +78,17 @@ class Bufferpool:
         else:
             node.pirLcount+=1   #pin this page
             self._move_to_head(node)
-            return node.key
+            return node.data
 
-    def unpin(self,pid):
+    """
+    when read and write finish, should unpin page. If it's write, it should make this page dirty
+    """
+    def access_finish(self,pid,signal): #signal == 1: write; signal == 0: read
         node = self.cache.get(pid)
-        node.pirLcount -= 1
+        if(signal == 1):
+            node.dirty = True
+            self.dirty_pages.add(node.key)
+        node.pirLcount -= 1  #unpin this page
 
     def has_capacity(self):
         return self.num_pages < self.capacity
@@ -156,6 +163,7 @@ class DLinkedNode:
     def __init__(self,key,data):
         self.key=key
         self.data=data #data supposed to be page (data_array)
+        self.dirty = False
         self.pirLcount=0  
         self.next=None
         self.prev=None
