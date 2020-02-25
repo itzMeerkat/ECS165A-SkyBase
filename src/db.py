@@ -6,7 +6,6 @@ class Database():
 
     def __init__(self):
         self.tables = []
-        self.next_rid = 0 #???
         self.file_handler = []
         pass
 
@@ -63,9 +62,10 @@ class Database():
     def drop_table(self, name):
         pass
 
-    #???
+    """
     def _get_rid(self):
         self.next_rid += 1
         return self.next_rid
+    """
 
     
