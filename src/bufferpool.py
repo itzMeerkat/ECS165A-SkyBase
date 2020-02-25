@@ -162,7 +162,7 @@ class Bufferpool:
 use pid as key of DLinkedNode.
 operate data in page directly
 """
-class DLinkedNode:
+class DLinkedNode():
     def __init__(self,key,data):
         self.key=key
         self.data=data #data supposed to be page (data_array)

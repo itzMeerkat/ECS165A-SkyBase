@@ -28,7 +28,7 @@ class Table:
         self.num_columns = num_columns
 
         self.bufferpool = Bufferpool(file_handler)
-        self.columns = [Column(None) for i in range(self.num_columns + META_COL_SIZE)]
+        self.columns = [Column(self.bufferpool) for i in range(self.num_columns + META_COL_SIZE)]
 
         # {rid: Record obj}
         self.page_directory = {}
