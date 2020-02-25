@@ -43,6 +43,9 @@ class Database():
         self.file_handler = [bp_meta_handler, tp_meta_handler, bp_handler, tp_handler]
 
     def close(self):
+        for table in self.tables:
+            table.bufferpool.write_back_all_dirty_page()
+
         for handler in self.file_handler:
             handler.close()
 

@@ -168,4 +168,7 @@ class Table:
     
     def __merge(self):
         pass
+
+    def update_page_directory(self):
+        pass
  
