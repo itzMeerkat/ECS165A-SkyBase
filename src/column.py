@@ -66,8 +66,8 @@ class Column:
         if (self.len_tail[base_group] <= 0) or (node.has_capacity() is False):
             tar_pid = self._append_tail_page(base_group)
             if(tar_pid>1):
-                self.bufferpool.access_finish(node,0)
-            node = self.bufferpool.get(tar_pid)
+                self.bufferpool.access_finish(node,0)    #unpin the page that is full
+            node = self.bufferpool.access(tar_pid)
         """
         if (self.len_tail[base_group] <= 0) or (self.tail_pages[tar_pid].has_capacity() is False):
             tar_pid = self._append_tail_page(base_group)
@@ -107,7 +107,7 @@ class Column:
         if (tar_pid < 0) or (node.has_capacity() is False):  
             tar_pid = self._append_base_page()
             if(tar_pid>0):
-                self.bufferpool.access_finish(node,0)
+                self.bufferpool.access_finish(node,0)    #unpin the page that is full
             node = self.bufferpool.access(tar_pid)
         
         """

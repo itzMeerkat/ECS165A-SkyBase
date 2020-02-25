@@ -27,7 +27,7 @@ class Table:
         self.key = key
         self.num_columns = num_columns
 
-        #self.bufferpool = Bufferpool(file_handler)
+        self.bufferpool = Bufferpool(file_handler)
         self.columns = [Column(None) for i in range(self.num_columns + META_COL_SIZE)]
 
         # {rid: Record obj}

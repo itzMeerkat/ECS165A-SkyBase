@@ -16,6 +16,7 @@ class Bufferpool:
         self.capacity = BUFFERPOOL_SIZE
 
     #function operate Double Linked List directly
+    #---------------------------------------------------------------------------------
     def _add_to_head(self,node):
         node.prev=self.head
         node.next=self.head.next
@@ -37,6 +38,7 @@ class Bufferpool:
         while(res.pirLcount!=0):
             res=res.prev
         return res
+    #---------------------------------------------------------------------------------
     #function operate Double Linked List ends
 
     def new_page(self,pid):
