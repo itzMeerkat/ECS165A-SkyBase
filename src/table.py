@@ -27,8 +27,8 @@ class Table:
         self.key = key
         self.num_columns = num_columns
 
-        self.bufferpool = Bufferpool(file_handler)
-        self.columns = [Column(self.bufferpool) for i in range(self.num_columns + META_COL_SIZE)]
+        #self.bufferpool = Bufferpool(file_handler)
+        self.columns = [Column(None) for i in range(self.num_columns + META_COL_SIZE)]
 
         # {rid: Record obj}
         self.page_directory = {}
@@ -55,7 +55,10 @@ class Table:
         l = mask.size
         for i in range(l):
             if mask[i] > 0:
-                pid, offset = self.columns[i].write(cols[i], dest, old_loc[i][0])
+                ol = None
+                if not old_loc is None:
+                    ol = old_loc[i][0]
+                pid, offset = self.columns[i].write(cols[i], dest, ol)
                 locs.append((pid, offset))
             else:
                 locs.append(None)
