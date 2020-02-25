@@ -82,7 +82,24 @@ class Column:
         node = self.bufferpool.access(pid)
         val = node.read(offset)
         self.bufferpool.access_finish(node,0) 
+
         return val
+        
+        """
+        if self.is_tail_pid(pid):
+            node = self.bufferpool.access(pid)
+            return self.tail_pages[pid].read(offset)
+        else:
+            return self.base_pages[pid].read(offset)
+        """
+        #bt = pid & 1
+        #pid >>= 1
+        #print(bt, pid)
+        """
+        val = self.bufferpool.get(pid).read(offset)  
+        self.bufferpool.access_finish(pid,0) 
+        return val
+        """
 
     def _write_base(self, val):
         tar_pid = self.len_base - 1
