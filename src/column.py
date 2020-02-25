@@ -1,7 +1,7 @@
 from .config import *
 from time import time
 from .page import Page
-from .bufferpool import Bufferpool
+from .bufferpool import *
 
 class Record:
     '''
@@ -39,10 +39,10 @@ TODO: free space reuse
 """
 class Column:
     def __init__(self,bufferpool):
-        self.base_pages = []
-        self.tail_pages = {} # pid: Page()
+        #self.base_pages = []
+        #self.tail_pages = {} # pid: Page()
         self.len_base = 0
-        self.len_tail = []
+        self.len_tail = [] #number of tail page
         self.bufferpool = bufferpool
 
     def _append_tail_page(self, base_group):
@@ -62,40 +62,43 @@ class Column:
 
     def _write_tail(self, val, base_group):
         tar_pid = self.build_pid(base_group, self.len_tail[base_group])
-
-        if (self.len_tail[base_group] <= 0) or (self.bufferpool.get(tar_pid).has_capacity() is False):#such get will not pin page, will be fix
+        node = self.bufferpool.access(tar_pid)
+        if (self.len_tail[base_group] <= 0) or (node.has_capacity() is False):
             tar_pid = self._append_tail_page(base_group)
+            if(tar_pid>1):
+                self.bufferpool.access_finish(node,0)
+            node = self.bufferpool.get(tar_pid)
         """
         if (self.len_tail[base_group] <= 0) or (self.tail_pages[tar_pid].has_capacity() is False):
             tar_pid = self._append_tail_page(base_group)
         """
-        
-        offset = self.bufferpool.get(tar_pid).write(val)
-        self.bufferpool.access_finish(tar_pid,1)
+        offset = node.write(val)
+        self.bufferpool.access_finish(node,1)
         #offset = self.tail_pages[tar_pid].write(val)
         
         return tar_pid, offset
 
     def read(self, pid, offset):
-        #bt = pid & 1
-        #pid >>= 1
-        #print(bt, pid)
-        val = self.bufferpool.get(pid).read(offset)  
-        self.bufferpool.access_finish(pid,0) 
+        node = self.bufferpool.access(pid)
+        val = node.read(offset)
+        self.bufferpool.access_finish(node,0) 
         return val
 
     def _write_base(self, val):
         tar_pid = self.len_base - 1
-        
-        if (tar_pid < 0) or (self.bufferpool.get(tar_pid).has_capacity() is False):#such get will not pin page. will fix
+        node = self.bufferpool.access(tar_pid)
+        if (tar_pid < 0) or (node.has_capacity() is False):  
             tar_pid = self._append_base_page()
+            if(tar_pid>0):
+                self.bufferpool.access_finish(node,0)
+            node = self.bufferpool.access(tar_pid)
         """
         if (tar_pid < 0) or (self.base_pages[tar_pid].has_capacity() is False):
             tar_pid = self._append_base_page()
         """
 
-        offset = self.bufferpool.get(tar_pid).write(val)
-        self.bufferpool.access_finish(tar_pid,1)
+        offset = node.write(val)
+        self.bufferpool.access_finish(node,1)
         #offset = self.base_pages[tar_pid].write(val)
 
         return tar_pid, offset
@@ -107,9 +110,8 @@ class Column:
             return self._write_tail(val, self.base_pid_to_group(base_pid))
     
     def inplace_update(self, pid, offset, val):
-        # TODO: This should be taken over by buffer pool
-        #self.pages[bt][pid].inplace_update(offset, val)
-        pass
+        self.bufferpool.access(pid).inplace_update(offset,val)
+        self.bufferpool.access_finish(pid,1)
 
     def build_pid(self, base_group, index):
         return ((base_group + 1) << 32) | (index & ((1 << 32) - 1))
