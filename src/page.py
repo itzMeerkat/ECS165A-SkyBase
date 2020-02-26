@@ -2,10 +2,12 @@ from .config import *
 
 class Page:
 
-    def __init__(self):
+    def __init__(self, is_tail=True):
         self.num_records = 0
         self.data = bytearray(PAGE_SIZE)
-        self.free_index = [i for i in range(511, 0, -1)]
+        if is_tail:
+            self.bid = bytearray(PAGE_SIZE)
+        self.free_index = 1
         self.MAX_RECORDS = PAGE_SIZE / COL_SIZE - 1
         self.lineage = 0 # remeber to put this on the first spot in the page when flushing
 
@@ -20,8 +22,9 @@ class Page:
     '''
     def write(self, value):
         #print(self.num_records)
-        self.lineage += 1
-        insert_index = self.free_index.pop()
+        #self.lineage += 1
+        insert_index = self.free_index
+        self.free_index += 1
         l = insert_index * COL_SIZE
         r = l + COL_SIZE
         self.data[l:r] = value.to_bytes(8, 'big')
