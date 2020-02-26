@@ -177,11 +177,14 @@ class DLinkedNode(Page):
         self.next=None
         self.prev=None
 
+        """
         self.num_records = 0
         self.free_index = [i for i in range(511, 0, -1)]
         self.MAX_RECORDS = PAGE_SIZE / COL_SIZE - 1
         self.lineage = 0 # remeber to put this on the first spot in the page when flushing
+        """
 
+    """
     def has_capacity(self):
         if self.MAX_RECORDS > self.num_records:
             return True
@@ -201,9 +204,6 @@ class DLinkedNode(Page):
         self.num_records += 1
         return insert_index
 
-    """
-    TODO: Do we need to check if the offset valid?
-    """
     def read(self, offset):
         l = offset * COL_SIZE
         r = l + COL_SIZE
@@ -220,6 +220,7 @@ class DLinkedNode(Page):
         l = offset * COL_SIZE
         r = l + COL_SIZE
         self.data[l:r] = val.to_bytes(8, 'big')
+    """
 
 
 
