@@ -1,9 +1,10 @@
 from src.db import Database
 from src.query import Query
+
 #from src.config import init
 
 from random import choice, randint, sample, seed
-from colorama import Fore, Back, Style
+#from colorama import Fore, Back, Style
 
 # Student Id and 4 grades
 #init()

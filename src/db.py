@@ -1,12 +1,15 @@
 from .table import Table
 from .bufferpool import *
 import os
+import json
 
 class Database():
 
     def __init__(self):
         self.tables = []
         self.file_handler = []
+        self.page_directory = {}
+        self.pg_file_path = ""
         pass
 
     def open(self, db_name):
@@ -15,7 +18,7 @@ class Database():
         tp_meta = file_path + "_tp_meta"
         bp_file = file_path + "_bp"
         tp_file = file_path + "_tp"
-
+        pd_file = file_path + "page_direction.json"
         try:
             bp_meta_handler = open(bp_meta, 'r+')
         except IOError:
@@ -34,17 +37,28 @@ class Database():
         # If not exists, create the file
             bp_handler = open(bp_file, 'w+')
 
-        try:
-            tp_handler = open(tp_file, 'r+')
-        except IOError:
-        # If not exists, create the file
-            tp_handler = open(tp_file, 'w+')
-
         self.file_handler = [bp_meta_handler, tp_meta_handler, bp_handler, tp_handler]
+        #update the page directory 
+        self.pg_file_path = pd_file
+        self.init_page_dir()
+    
+    def init_page_dir(self):
+        with open(self.pg_file_path, 'r') as outfile:
+            self.page_directory = json.load(outfile)
+        self.rid = len(self.page_directory)
+        
+    def write_back_page_dir(self):
+        with open(self.pg_file_path, "w") as outfile:
+                pd_json = json.dumps(self.page_directory)
+                outfile.write(pd_json)
 
     def close(self):
+        for table in self.tables:
+            table.bufferpool.write_back_all_dirty_page()
+
         for handler in self.file_handler:
             handler.close()
+        write_back_page_dir(self)
 
     """
     # Creates a new table
@@ -67,5 +81,4 @@ class Database():
         self.next_rid += 1
         return self.next_rid
     """
-
     

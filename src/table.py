@@ -22,7 +22,7 @@ class Table:
     :param num_columns: int     #Number of Columns: all columns are integer
     :param key: int             #Index of table key in columns
     """
-    def __init__(self, name, num_columns, key, file_handler):
+    def __init__(self, name, num_columns, key, file_handler, page_directory):
         self.name = name
         self.key = key
         self.num_columns = num_columns
@@ -31,7 +31,7 @@ class Table:
         self.columns = [Column(self.bufferpool, i+1) for i in range(self.num_columns + META_COL_SIZE)]
 
         # {rid: Record obj}
-        self.page_directory = {}
+        self.page_directory = page_directory
         self.rid = 1
         self.lid = 1
         self.lid_rid = {}
@@ -167,5 +167,8 @@ class Table:
         #del self.lid_rid[delete_lid]
     
     def __merge(self):
+        pass
+
+    def update_page_directory(self):
         pass
  
