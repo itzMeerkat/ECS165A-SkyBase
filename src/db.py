@@ -58,7 +58,7 @@ class Database():
 
         for handler in self.file_handler:
             handler.close()
-        write_back_page_dir(self)
+        write_back_page_dir()
 
     """
     # Creates a new table
@@ -67,7 +67,7 @@ class Database():
     :param key: int             #Index of table key in columns
     """
     def create_table(self, name, num_columns, key):
-        table = Table(name, num_columns, key, self.file_handler)
+        table = Table(name, num_columns, key, self.file_handler,self.page_directory)
         return table
 
     """
