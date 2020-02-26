@@ -2,12 +2,10 @@ from .config import *
 
 class Page:
 
-    def __init__(self, is_tail=True):
-        self.is_tail = is_tail
+    def __init__(self):
         self.num_records = 0
         self.data = bytearray(PAGE_SIZE)
-        if is_tail:
-            self.bids = bytearray(PAGE_SIZE)
+        self.bids = bytearray(PAGE_SIZE)
         self.MAX_RECORDS = PAGE_SIZE / COL_SIZE - 1
         self.lineage = 0 # remeber to put this on the first spot in the page when flushing
 
@@ -20,7 +18,7 @@ class Page:
     Each write will write a 64-bit long data into page
     TODO: benchmark of byte conversion
     '''
-    def write(self, value, bid=None):
+    def write(self, value, bid):
         #print(self.num_records)
         #self.lineage += 1
         insert_index = self.num_records
@@ -28,9 +26,8 @@ class Page:
         l = insert_index * COL_SIZE
         r = l + COL_SIZE
         self.data[l:r] = value.to_bytes(8, 'big')
-        
-        if not bid is None:
-            self.bids[l:r] = bid.to_bytes(8, 'big')
+
+        self.bids[l:r] = bid.to_bytes(8, 'big')
         return insert_index
 
     """
