@@ -41,12 +41,16 @@ class Bufferpool:
     #---------------------------------------------------------------------------------
     #function operate Double Linked List ends
 
-    def new_page(self,pid):
+    def new_page(self,pid,signal):
         if(self.has_capacity() is False):
             sign = self._release_one_page()
             if(sign == FAIL):
                 pass
-        node = DLinkedNode(pid,bytearray(PAGE_SIZE))
+        if(signal == BASE_PAGE):
+            node = DLinkedNode(pid,bytearray(PAGE_SIZE))
+        else:
+            node = DLinkedNode(pid,bytearray(PAGE_SIZE))
+        #node = DLinkedNode(pid,bytearray(PAGE_SIZE))
         self.cache[pid]=node
         self._add_to_head(node)
         self.num_pages+=1
