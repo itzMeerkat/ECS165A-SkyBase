@@ -67,7 +67,7 @@ class Column:
         return pid
 
 
-    def _write_tail(self, val, base_group):
+    def _write_tail(self, val, base_group, rid):
         tar_pid = self.build_pid(base_group, self.len_tail[base_group])
         if(self.len_tail[base_group] <= 0):
             tar_pid = self._append_tail_page(base_group)
@@ -82,7 +82,7 @@ class Column:
             tar_pid = self._append_tail_page(base_group)
         """
         
-        offset = node.page.write(val)
+        offset = node.page.write(val,rid)
         self.bufferpool.access_finish(node,1)
         #offset = self.tail_pages[tar_pid].write(val)
         
@@ -106,7 +106,7 @@ class Column:
         """
         
 
-    def _write_base(self, val):
+    def _write_base(self, val,rid):
         tar_pid = self.build_pid(-1, self.len_base - 1)
         if(self.len_base-1<0):
             tar_pid = self._append_base_page()
@@ -124,17 +124,17 @@ class Column:
         
         
         
-        offset = node.page.write(val)
+        offset = node.page.write(val,rid)
         self.bufferpool.access_finish(node,1)
         #offset = self.base_pages[tar_pid].write(val)
         #tar_pid |= (self.col_index << 56)
         return tar_pid, offset
 
-    def write(self, val, dest, base_pid):
+    def write(self, val, dest, base_pid, rid):
         if dest == TO_BASE_PAGE:
-            return self._write_base(val)
+            return self._write_base(val,rid)
         elif dest == TO_TAIL_PAGE:
-            return self._write_tail(val, self.base_pid_to_group(base_pid))
+            return self._write_tail(val, self.base_pid_to_group(base_pid),rid)
     
     def inplace_update(self, pid, offset, val):
         node = self.bufferpool.access(pid)
