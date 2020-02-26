@@ -30,12 +30,17 @@ class Database():
         except IOError:
         # If not exists, create the file
             tp_meta_handler = open(tp_meta, 'w+')
-
         try:
             bp_handler = open(bp_file, 'r+')
         except IOError:
         # If not exists, create the file
             bp_handler = open(bp_file, 'w+')
+
+        try:
+            tp_handler = open(tp_file, 'r+')
+        except IOError:
+        # If not exists, create the file
+            tp_handler = open(tp_file, 'w+')
 
         self.file_handler = [bp_meta_handler, tp_meta_handler, bp_handler, tp_handler]
         #update the page directory 
