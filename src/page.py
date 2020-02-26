@@ -3,6 +3,7 @@ from .config import *
 class Page:
 
     def __init__(self, is_tail=True):
+        self.is_tail = is_tail
         self.num_records = 0
         self.data = bytearray(PAGE_SIZE)
         if is_tail:
