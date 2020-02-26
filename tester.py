@@ -8,6 +8,7 @@ from colorama import Fore, Back, Style
 # Student Id and 4 grades
 #init()
 db = Database()
+db.open('~/ECS165')
 grades_table = db.create_table('Grades', 5, 0)
 query = Query(grades_table)
 
