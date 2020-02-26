@@ -58,7 +58,7 @@ class Database():
 
         for handler in self.file_handler:
             handler.close()
-        write_back_page_dir(self)
+        self.write_back_page_dir()
 
     """
     # Creates a new table

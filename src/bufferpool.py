@@ -7,8 +7,8 @@ class Bufferpool:
     def __init__(self, file_handler):
         self.cache={}
         self.dirty_pages=set()     
-        self.head=DLinkedNode(-1,None)
-        self.tail=DLinkedNode(-2,None)
+        self.head=DLinkedNode(-1,False)
+        self.tail=DLinkedNode(-2,False)
         self.head.next=self.tail 
         self.tail.prev=self.head
         self.file_handler = file_handler
@@ -47,9 +47,11 @@ class Bufferpool:
             if(sign == FAIL):
                 pass
         if(signal == BASE_PAGE):
-            node = DLinkedNode(pid,bytearray(PAGE_SIZE))
+            node = DLinkedNode(pid,False)
+            #node = DLinkedNode(pid,bytearray(PAGE_SIZE))
         else:
-            node = DLinkedNode(pid,bytearray(PAGE_SIZE))
+            node = DLinkedNode(pid,True)
+            #node = DLinkedNode(pid,bytearray(PAGE_SIZE))
         #node = DLinkedNode(pid,bytearray(PAGE_SIZE))
         self.cache[pid]=node
         self._add_to_head(node)
@@ -166,10 +168,10 @@ class Bufferpool:
 use pid as key of DLinkedNode.
 operate data in page directly
 """
-class DLinkedNode():
-    def __init__(self,key,data):
+class DLinkedNode(Page):
+    def __init__(self,key,is_tail):
         self.key=key
-        self.data=data #data supposed to be page (data_array)
+        self.page=Page(is_tail=is_tail)
         self.dirty = False
         self.pirLcount=0  
         self.next=None
