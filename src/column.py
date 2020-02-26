@@ -73,7 +73,7 @@ class Column:
             tar_pid = self._append_tail_page(base_group)
 
         node = self.bufferpool.access(tar_pid)
-        if(node.has_capacity() is False):
+        if(node.page.has_capacity() is False):
             tar_pid = self._append_tail_page(base_group)
             self.bufferpool.access_finish(node,0)    #unpin the page that is full
             node = self.bufferpool.access(tar_pid)
@@ -82,7 +82,7 @@ class Column:
             tar_pid = self._append_tail_page(base_group)
         """
         
-        offset = node.write(val)
+        offset = node.page.write(val)
         self.bufferpool.access_finish(node,1)
         #offset = self.tail_pages[tar_pid].write(val)
         
@@ -90,7 +90,7 @@ class Column:
 
     def read(self, pid, offset):
         node = self.bufferpool.access(pid)
-        val = node.read(offset)
+        val = node.page.read(offset)
         self.bufferpool.access_finish(node,0)
 
         return val
@@ -112,7 +112,7 @@ class Column:
             tar_pid = self._append_base_page()
 
         node = self.bufferpool.access(tar_pid)
-        if(node.has_capacity() is False):
+        if(node.page.has_capacity() is False):
             tar_pid = self._append_base_page()
             self.bufferpool.access_finish(node,1)
             node = self.bufferpool.access(tar_pid)
@@ -124,7 +124,7 @@ class Column:
         
         
         
-        offset = node.write(val)
+        offset = node.page.write(val)
         self.bufferpool.access_finish(node,1)
         #offset = self.base_pages[tar_pid].write(val)
         #tar_pid |= (self.col_index << 56)
@@ -138,7 +138,7 @@ class Column:
     
     def inplace_update(self, pid, offset, val):
         node = self.bufferpool.access(pid)
-        node.inplace_update(offset,val)
+        node.page.inplace_update(offset,val)
         self.bufferpool.access_finish(node,1)
 
         """
