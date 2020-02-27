@@ -9,6 +9,7 @@ class Database():
         self.tables = []
         self.file_handler = []
         self.page_directory = {}
+        self.reverse_indirection = {}
         self.pg_file_path = ""
         pass
 
@@ -72,7 +73,8 @@ class Database():
     :param key: int             #Index of table key in columns
     """
     def create_table(self, name, num_columns, key):
-        table = Table(name, num_columns, key, self.file_handler,self.page_directory)
+        table = Table(name, num_columns, key, self.file_handler,
+                      self.page_directory, self.reverse_indirection)
         return table
 
     """

@@ -22,7 +22,7 @@ class Table:
     :param num_columns: int     #Number of Columns: all columns are integer
     :param key: int             #Index of table key in columns
     """
-    def __init__(self, name, num_columns, key, file_handler,page_directory):
+    def __init__(self, name, num_columns, key, file_handler,page_directory,reverse_ind):
         self.name = name
         self.key = key
         self.num_columns = num_columns
@@ -32,10 +32,10 @@ class Table:
 
         # {rid: Record obj}
         self.page_directory = page_directory
+        self.reverse_indirection = reverse_ind
         self.rid = 1
-        self.lid = 1
-        self.lid_rid = {}
-        self.key_lid = {}
+
+        self.fake_index = {}
 
         self.deleted_base_rid = []
 
@@ -44,58 +44,59 @@ class Table:
         self.rid += 1
         return r
 
-    def get_next_lid(self):
-        r = self.lid
-        self.lid += 1
-        return r
 
-    def _write_cols(self, mask, cols, dest, bid,rid):
+    def _write_cols(self, mask, cols, dest, bid):
         #print("writing", mask.bits)
         locs = []
+        ofs = None
         l = mask.size
         for i in range(l):
             if mask[i] > 0:
-                pid, offset = self.columns[i].write(cols[i], dest, bid, rid)
-                locs.append((pid, offset))
+                bpid = None
+                if dest == TO_TAIL_PAGE:
+                    bpid = bid[i]
+                pid, ofs = self.columns[i].write(cols[i], dest, bpid)
+                locs.append(pid)
             else:
                 locs.append(None)
         #print("wrote", len(locs))
-        return locs
+        return locs, ofs
 
     """
     TODO: mask: string for debuging, will switch to bitmap
     mask and cols must match and fit the schema
     """
     def put(self, rid, base_rid, key, write_mask, cols):
-        new_record = Record(rid, key, Bits('0' * len(cols)))
+        l = len(cols)
+        new_record = Record(rid, key, Bits('0' * l))
         dest = TO_TAIL_PAGE
-        new_lid = None
+
         if base_rid is None:
             dest = TO_BASE_PAGE
-            new_lid = self.get_next_lid()
-            self.key_lid[key] = new_lid
-            self.lid_rid[new_lid] = rid
+            self.fake_index[key] = rid
         else:
             base_record = self.page_directory[base_rid]
             #old_loc = base_record.locations
-            pre_rid = base_record.get_indirection()
+            pre_rid = base_record.indirection
             if pre_rid == 0:
                 pre_rid = base_rid
-            new_record.set_indirection(pre_rid)
-            base_record.set_indirection(rid)
 
-            # print("base, pre rid:", base_rid, pre_rid)
+
+            new_record.indirection = pre_rid
+            base_record.indirection = rid
 
             # Inplace update base record indirection column
-            base_ind_loc = base_record.locations[INDIRECTION_COLUMN]
-            self.columns[INDIRECTION_COLUMN].inplace_update(base_ind_loc[0], base_ind_loc[1], base_record.get_indirection())
+            base_ind_pid = base_record.pids[INDIRECTION_COLUMN]
+            base_offset = base_record.offset
+            self.columns[INDIRECTION_COLUMN].inplace_update(
+                base_ind_pid, base_offset, base_record.indirection)
 
-            base_schema_loc = base_record.locations[SCHEMA_ENCODING_COLUMN]
+            base_schema_loc = base_record.pids[SCHEMA_ENCODING_COLUMN]
 
             base_record.mask.merge(write_mask)
 
             self.columns[SCHEMA_ENCODING_COLUMN].inplace_update(
-                base_schema_loc[0], base_schema_loc[1], base_record.mask)
+                base_schema_loc, base_offset, base_record.mask)
 
 
         # Combine meta cols and data cols
@@ -105,16 +106,23 @@ class Table:
         #print("Writing mask",write_mask.bits)
         # print("Writing mask",write_mask.bits)
 
-        locs = self._write_cols(write_mask, meta_and_data, dest, base_rid,rid)
+        
+        base_pids = None
+        if not base_rid is None:
+            base_pids = self.page_directory[base_rid].pids
+        locs, offset = self._write_cols(
+            write_mask, meta_and_data, dest, base_pids)
 
         # Merge old and new locations
         if dest == TO_TAIL_PAGE:
-            for i in range(len(locs)):
+            for i in range(4,l+4):
                 if locs[i] is None:
-                    locs[i] = self.page_directory[pre_rid].locations[i]
+                    locs[i] = self.page_directory[pre_rid].pids[i]
 
-        new_record.locations = locs
+        new_record.pids = locs
+        new_record.offset = offset
         self.page_directory[rid] = new_record
+        self.reverse_indirection[rid] = base_rid
 
 
     def get(self, rid, read_mask):
@@ -123,7 +131,7 @@ class Table:
         latest_rec = None
         if record.mask.bits > 0:
             #print("NEED HOP", record.mask.bits)
-            latest = record.get_indirection()
+            latest = record.indirection
             latest_rec = self.page_directory[latest]
 
         #print("read mask", read_mask.bits, read_mask.size)
@@ -131,15 +139,15 @@ class Table:
             col_ind = i + 4
             v = read_mask[i]
             if v > 0:
-                tpid = record.locations[col_ind][0]
-                offset = record.locations[col_ind][1]
+                tpid = record.pids[col_ind]
+                offset = record.offset
 
                 # second hop needed
                 if record.mask[i] > 0:
                     #print("HOP")
-                    tpid = latest_rec.locations[col_ind][0]
-                    offset = latest_rec.locations[col_ind][1]
-
+                    tpid = latest_rec.pids[col_ind]
+                    offset = latest_rec.offset
+                #print("Reading", tpid, offset)
                 r = self.columns[col_ind].read(tpid, offset)
                 res.append(r)
         
@@ -151,17 +159,16 @@ class Table:
     # Get ready for the merge process
 
     def key_to_baseRid(self,key):
-        if not key in self.key_lid:
+        if not key in self.fake_index:
             return None
-        lid = self.key_lid[key]
-        return self.lid_rid[lid]
+        return self.fake_index[key]
 
-    def set_delete_flag(self, key):
-        delete_lid = self.key_lid[key]
-        delete_rid = self.lid_rid[delete_lid]
-        self.deleted_base_rid.append(delete_rid)
-        del self.key_lid[key]
-        #del self.lid_rid[delete_lid]
+    # def set_delete_flag(self, key):
+    #     delete_lid = self.key_lid[key]
+    #     delete_rid = self.lid_rid[delete_lid]
+    #     self.deleted_base_rid.append(delete_rid)
+    #     del self.key_lid[key]
+    #     #del self.lid_rid[delete_lid]
     
     def __merge(self):
         pass
