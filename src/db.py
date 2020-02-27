@@ -10,7 +10,13 @@ class Database():
         self.file_handler = []
         self.page_directory = {}
         self.pg_file_path = ""
+        self.rid = 1
         pass
+
+    def get_next_rid(self):
+        r = self.rid
+        self.rid += 1
+        return r
 
     def open(self, db_name):
         file_path = db_name.replace("~/", "")
@@ -72,7 +78,7 @@ class Database():
     :param key: int             #Index of table key in columns
     """
     def create_table(self, name, num_columns, key):
-        table = Table(name, num_columns, key, self.file_handler,self.page_directory)
+        table = Table(name, num_columns, key, self.file_handler,self.page_directory, self)
         return table
 
     """

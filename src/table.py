@@ -22,32 +22,19 @@ class Table:
     :param num_columns: int     #Number of Columns: all columns are integer
     :param key: int             #Index of table key in columns
     """
-    def __init__(self, name, num_columns, key, file_handler,page_directory):
+    def __init__(self, name, num_columns, key, file_handler,page_directory, db):
         self.name = name
         self.key = key
         self.num_columns = num_columns
 
         self.bufferpool = Bufferpool(file_handler)
         self.columns = [Column(self.bufferpool, i+1) for i in range(self.num_columns + META_COL_SIZE)]
-
         # {rid: Record obj}
         self.page_directory = page_directory
-        self.rid = 1
-        self.lid = 1
-        self.lid_rid = {}
-        self.key_lid = {}
-
+        self.db = db
+        self.key_rid = {}
         self.deleted_base_rid = []
 
-    def get_next_rid(self):
-        r = self.rid
-        self.rid += 1
-        return r
-
-    def get_next_lid(self):
-        r = self.lid
-        self.lid += 1
-        return r
 
     def _write_cols(self, mask, cols, dest, bid,rid):
         #print("writing", mask.bits)
@@ -69,12 +56,13 @@ class Table:
     def put(self, rid, base_rid, key, write_mask, cols):
         new_record = Record(rid, key, Bits('0' * len(cols)))
         dest = TO_TAIL_PAGE
-        new_lid = None
+        #new_lid = None
         if base_rid is None:
             dest = TO_BASE_PAGE
-            new_lid = self.get_next_lid()
-            self.key_lid[key] = new_lid
-            self.lid_rid[new_lid] = rid
+            #new_lid = self.get_next_lid()
+            #self.key_lid[key] = new_lid
+            #self.lid_rid[new_lid] = rid
+            self.key_rid[key] = rid
         else:
             base_record = self.page_directory[base_rid]
             #old_loc = base_record.locations
@@ -151,16 +139,16 @@ class Table:
     # Get ready for the merge process
 
     def key_to_baseRid(self,key):
-        if not key in self.key_lid:
+        if not key in self.key_rid:
             return None
-        lid = self.key_lid[key]
-        return self.lid_rid[lid]
+        #lid = self.key_lid[key]
+        return self.key_rid[key]
 
     def set_delete_flag(self, key):
-        delete_lid = self.key_lid[key]
-        delete_rid = self.lid_rid[delete_lid]
+        delete_rid = self.key_rid[key]
+        #delete_rid = self.lid_rid[delete_lid]
         self.deleted_base_rid.append(delete_rid)
-        del self.key_lid[key]
+        del self.key_rid[key]
         #del self.lid_rid[delete_lid]
     
     def __merge(self):
