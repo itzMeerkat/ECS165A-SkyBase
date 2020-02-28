@@ -11,7 +11,7 @@ class Page:
     def has_capacity(self):
         if MAX_RECORDS > self.num_records:
             return True
-        print("PAGE FULLLLLLL", self.num_records)
+        #print("PAGE FULLLLLLL", self.num_records)
         return False
 
     '''

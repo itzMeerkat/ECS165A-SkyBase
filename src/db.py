@@ -49,9 +49,15 @@ class Database():
         self.init_page_dir()
     
     def init_page_dir(self):
-        with open(self.pg_file_path, 'r') as outfile:
-            self.page_directory = json.load(outfile)
-        self.rid = len(self.page_directory)
+        if not os.path.exists(self.pg_file_path):
+            f = open(self.pg_file_path, 'w+')
+            f.close()
+            self.page_directory = {}
+            self.rid = 1
+        else:
+            with open(self.pg_file_path, 'r') as outfile:
+                self.page_directory = json.load(outfile)
+            self.rid = len(self.page_directory) + 1
         
     def write_back_page_dir(self):
         with open(self.pg_file_path, "w") as outfile:
