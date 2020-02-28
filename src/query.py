@@ -25,12 +25,16 @@ class Query:
 
     def insert(self, *columns):
         data = list(columns)
-        self.table.put(self.table.db.get_next_rid(), None, data[self.table.key], Bits('11111'), data)
+        next_rid = self.table.db.get_next_rid()
+        self.table.put(next_rid, None, data[self.table.key], Bits('11111'), data)
+        for col in range(self.table.num_columns):
+            self.table.index.add_to_index(col, rid, data[col])
     """
     # Read a record with specified key
     """
 
     def select(self, key, column, query_columns):
+        found_records = []
         mask = ""
         for i in query_columns:
             if i == 1:
@@ -39,10 +43,13 @@ class Query:
                 mask+="0"
         bits_mask = Bits(mask)
 
-        rid = self.table.key_to_baseRid(key)
+        #rid = self.table.key_to_baseRid(key)
         #print(key, rid)
-        r = self.table.get(rid, bits_mask)
-        return r
+        #select_index(self, column_number, value)
+        rids = select_index(column, key)
+        for r in rids:
+            found_records.append(self.table.get(r, bits_mask))
+        return found_records
 
 
     """

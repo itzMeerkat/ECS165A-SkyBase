@@ -26,19 +26,16 @@ class Table:
         self.name = name
         self.key = key
         self.num_columns = num_columns
-
         self.db = db
-
         self.bufferpool = Bufferpool(file_handler)
         self.columns = [Column(self.bufferpool, i+1) for i in range(self.num_columns + META_COL_SIZE)]
         # {rid: Record obj}
         self.page_directory = page_directory
         self.reverse_indirection = reverse_ind
         self.rid = 1
-
         self.fake_index = {}
-
         self.deleted_base_rid = []
+        self.index = Index()
 
     def get_next_rid(self):
         r = self.rid
@@ -117,8 +114,6 @@ class Table:
             write_mask, meta_and_data, dest, base_pids)
 
         # Merge old and new locations
-        
-
         new_record.pids = locs
         new_record.offset = offset
         self.page_directory[rid] = new_record
