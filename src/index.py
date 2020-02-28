@@ -1,4 +1,3 @@
-from .table import Table
 from BTrees.OOBTree import OOBTreePy
 from src.bits import Bits
 
@@ -13,7 +12,7 @@ class Index:
     def __init__(self, table):
         self.col_btree = {}
         self.table = table
-        create_index(0)
+        self.create_index(0)
 
 
     """
@@ -28,58 +27,63 @@ class Index:
     """
 
     def create_index(self, column_number):
+        if column_number in self.col_btree:
+            return
+        print("Create index", column_number)
         zeros = [None]*self.table.num_columns
         mask = Bits("")
         mask.build_from_list(zeros[:column_number]+[1]+zeros[column_number:])
         tree = OOBTreePy()
         ks = {}
-        for rid in table.page_directory:
-            r = table.get(rid, mask)
+        for rid in self.table.page_directory:
+            r = self.table.get(rid, mask)
             #ks[rid] = r.columns[0]
             ks[r.columns[0]] = rid
         tree.update(ks)
-        col_btree[column_number] = tree
+        self.col_btree[column_number] = tree
         return True
 
     
-    def add_to_index(self, column_number, rid, value):  
-        if col_btree[column_number].has_key(value) == False:
-            col_btree[column_number].__setitem__(value, rid)
+    def add_to_index(self, column_number, rid, value):
+        if not column_number in self.col_btree:
+            self.create_index(column_number)
+        rids = [rid]
+        if self.col_btree[column_number].has_key(value) == False:
+            self.col_btree[column_number].__setitem__(value, rids)
         else:
-            rids = col_btree[column_number].__getitem__(value)
-            rids.append(rid)
-            col_btree[column_number].__setitem__(value, rids)
+            rids += self.col_btree[column_number].__getitem__(value)
+            self.col_btree[column_number].__setitem__(value, list(set(rids)))
         return True
 
     def remove_from_index(self, column_number, rid, value):
-        if col_btree[column_number].has_key(value) == False:
+        if self.col_btree[column_number].has_key(value) == False:
             return False
-        rids = col_btree[column_number].__getitem__(value)
+        rids = self.col_btree[column_number].__getitem__(value)
         if len(rids) == 1:
             #delete entire thing
-            col_btree[column_number].remove(key)
+            self.col_btree[column_number].remove(value)
         else:
             rids.remove(rid)
-            col_btree[column_number].__setitem__(value, rids)
+            self.col_btree[column_number].__setitem__(value, rids)
         return True
 
     def update_index(self, column_number, rid, old_value, new_value):
-        if col_btree[column_number].has_key(value) == False:
+        if self.col_btree[column_number].has_key(old_value) > 0:
             return False
-        old_rids = col_btree[column_number].__getitem__(old_value)
+        old_rids = self.col_btree[column_number].__getitem__(old_value)
         old_rids.remove(rid)
-        new_rids = col_btree[column_number].__getitem__(new_value)
+        new_rids = self.col_btree[column_number].__getitem__(new_value)
         new_rids.append(rid)
         update_dict = {}
         update_dict[old_value] = old_rids
         update_dict[new_value] = new_rids
-        col_btree[column_number].update(update_dict)
+        self.col_btree[column_number].update(update_dict)
         return True
 
     def select_index(self, column_number, value):
-        if col_btree[column_number].has_key(value) == False:
+        if self.col_btree[column_number].has_key(value) == False:
             return False
-        found_rids = col_btree[column_number].__getitem__(value)
+        found_rids = self.col_btree[column_number].__getitem__(value)
         return found_rids
 
     """

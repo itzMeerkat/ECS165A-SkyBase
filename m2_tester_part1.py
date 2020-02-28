@@ -11,6 +11,12 @@ query = Query(grades_table)
 
 records = {}
 seed(3562901)
+
+grades_table.index.create_index(1)
+grades_table.index.create_index(2)
+grades_table.index.create_index(3)
+grades_table.index.create_index(4)
+
 for i in range(0, 1000):
     key = 92106429 + i
     records[key] = [key, randint(0, 20), randint(0, 20), randint(0, 20), randint(0, 20)]
@@ -18,16 +24,23 @@ for i in range(0, 1000):
 keys = sorted(list(records.keys()))
 print("Insert finished")
 
-for key in keys:
-    record = query.select(key, 0, [1, 1, 1, 1, 1])[0]
-    error = False
-    for i, column in enumerate(record.columns):
-        if column != records[key][i]:
+
+
+for c in range(5):
+    _keys = list(set(records[record][c] for record in records))
+    index = {v: [records[record] for record in records if records[record][c] == v] for v in _keys}
+    for key in _keys:
+        results = query.select(key, c, [1, 1, 1, 1, 1])
+        error = False
+        if len(results) != len(index[key]):
             error = True
-    if error:
-        print('select error on', key, ':', record, ', correct:', records[key])
-    # else:
-    #     print('select on', key, ':', record)
+        if not error:
+            for record in index[key]:
+                if record not in results:
+                    error = True
+                    break
+        if error:
+            print('select error on', key, ', column', c,':', results, ', correct:', index[key])
 print("Select finished")
 
 for _ in range(10):
@@ -41,7 +54,7 @@ for _ in range(10):
             query.update(key, *updated_columns)
             record = query.select(key, 0, [1, 1, 1, 1, 1])[0]
             error = False
-            for j, column in enumerate(record.columns):
+            for j, column in enumerate(record):
                 if column != records[key][j]:
                     error = True
             if error:

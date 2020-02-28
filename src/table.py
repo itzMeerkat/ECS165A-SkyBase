@@ -3,17 +3,7 @@ from time import time
 from src.column import Column, Record
 from src.bits import Bits
 from .bufferpool import Bufferpool
-
-class QueryResult:
-    def __init__(self, res):
-        self.columns = res
-    
-    def __getitem__(self, key):
-        if key==0:
-            return self
-        return None
-    def __str__(self):
-        return str(self.columns)
+from .index import Index
 
 class Table:
 
@@ -35,7 +25,7 @@ class Table:
         self.rid = 1
         self.fake_index = {}
         self.deleted_base_rid = []
-        self.index = Index()
+        self.index = Index(self)
 
     def get_next_rid(self):
         r = self.rid
@@ -116,6 +106,7 @@ class Table:
         # Merge old and new locations
         new_record.pids = locs
         new_record.offset = offset
+
         self.page_directory[rid] = new_record
         self.reverse_indirection[rid] = base_rid
 
@@ -148,8 +139,7 @@ class Table:
                 r = self.columns[col_ind].read(tpid, offset)
                 res.append(r)
         
-        rt = QueryResult(res)
-        return rt
+        return res
     
     
     #After Retriving a LID for the record, then setting special val for the rids,
