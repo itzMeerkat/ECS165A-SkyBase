@@ -63,7 +63,7 @@ class Query:
         for i in mask:
             if i == 1:
                 self.table.index.col_btree[column].update_index(i, base_rid, old_value[count], new_value[count])
-                count++
+                count+= 1
 
 
     """
