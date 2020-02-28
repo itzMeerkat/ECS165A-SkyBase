@@ -22,25 +22,17 @@ class Table:
     :param num_columns: int     #Number of Columns: all columns are integer
     :param key: int             #Index of table key in columns
     """
-<<<<<<< HEAD
-    def __init__(self, name, num_columns, key, file_handler,page_directory, db):
-=======
-    def __init__(self, name, num_columns, key, file_handler,page_directory,reverse_ind):
->>>>>>> refactor
+    def __init__(self, name, num_columns, key, file_handler,page_directory,reverse_ind,db):
         self.name = name
         self.key = key
         self.num_columns = num_columns
+
+        self.db = db
 
         self.bufferpool = Bufferpool(file_handler)
         self.columns = [Column(self.bufferpool, i+1) for i in range(self.num_columns + META_COL_SIZE)]
         # {rid: Record obj}
         self.page_directory = page_directory
-<<<<<<< HEAD
-        self.db = db
-        self.key_rid = {}
-        self.deleted_base_rid = []
-
-=======
         self.reverse_indirection = reverse_ind
         self.rid = 1
 
@@ -53,7 +45,6 @@ class Table:
         self.rid += 1
         return r
 
->>>>>>> refactor
 
     def _write_cols(self, mask, cols, dest, bid):
         #print("writing", mask.bits)
@@ -77,20 +68,10 @@ class Table:
         l = len(cols)
         new_record = Record(rid, key, Bits('0' * l))
         dest = TO_TAIL_PAGE
-<<<<<<< HEAD
-        #new_lid = None
-        if base_rid is None:
-            dest = TO_BASE_PAGE
-            #new_lid = self.get_next_lid()
-            #self.key_lid[key] = new_lid
-            #self.lid_rid[new_lid] = rid
-            self.key_rid[key] = rid
-=======
 
         if base_rid is None:
             dest = TO_BASE_PAGE
             self.fake_index[key] = rid
->>>>>>> refactor
         else:
             base_record = self.page_directory[base_rid]
             #old_loc = base_record.locations
@@ -178,19 +159,6 @@ class Table:
     # Get ready for the merge process
 
     def key_to_baseRid(self,key):
-<<<<<<< HEAD
-        if not key in self.key_rid:
-            return None
-        #lid = self.key_lid[key]
-        return self.key_rid[key]
-
-    def set_delete_flag(self, key):
-        delete_rid = self.key_rid[key]
-        #delete_rid = self.lid_rid[delete_lid]
-        self.deleted_base_rid.append(delete_rid)
-        del self.key_rid[key]
-        #del self.lid_rid[delete_lid]
-=======
         if not key in self.fake_index:
             return None
         return self.fake_index[key]
@@ -201,7 +169,6 @@ class Table:
     #     self.deleted_base_rid.append(delete_rid)
     #     del self.key_lid[key]
     #     #del self.lid_rid[delete_lid]
->>>>>>> refactor
     
     def __merge(self):
         pass

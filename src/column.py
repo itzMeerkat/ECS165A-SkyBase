@@ -23,9 +23,7 @@ class Record:
             self.meta_data = [self.indirection, self.rid, self.timestamp, self.mask.bits]
         return self.meta_data
 
-"""
-TODO: free space reuse
-"""
+
 class Column:
     def __init__(self,bufferpool,column_index):
         self.col_index = column_index

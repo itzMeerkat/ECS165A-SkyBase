@@ -86,7 +86,7 @@ class Database():
     """
     def create_table(self, name, num_columns, key):
         table = Table(name, num_columns, key, self.file_handler,
-                      self.page_directory, self.reverse_indirection)
+                      self.page_directory, self.reverse_indirection, self)
         return table
 
     """
