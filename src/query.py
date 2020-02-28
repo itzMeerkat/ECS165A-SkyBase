@@ -61,7 +61,7 @@ class Query:
         #print(key, rid)
         #select_index(self, column_number, value)
         rids = self.table.index.select_index(column, key)
-        print(rids)
+        #print(rids)
         for r in rids:
             found_records.add_result(self.table.get(r, bits_mask))
         return found_records
