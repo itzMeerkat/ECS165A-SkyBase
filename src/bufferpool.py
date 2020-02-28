@@ -6,7 +6,7 @@ class Bufferpool:
 
     def __init__(self, file_handler):
         self.cache={}
-        self.dirty_pages=set()     
+        #self.dirty_pages=set()     
         self.head=DLinkedNode(-1)
         self.tail=DLinkedNode(-2)
         self.head.next=self.tail 
@@ -41,19 +41,13 @@ class Bufferpool:
     #---------------------------------------------------------------------------------
     #function operate Double Linked List ends
 
-    def new_page(self,pid,signal):
+    def new_page(self,pid):
         print("New page", pid)
         if(self.has_capacity() is False):
             sign = self._release_one_page()
             if(sign == FAIL):
                 print("Release failed")
-        if(signal == BASE_PAGE):
-            node = DLinkedNode(pid)
-            #node = DLinkedNode(pid,bytearray(PAGE_SIZE))
-        else:
-            node = DLinkedNode(pid)
-            #node = DLinkedNode(pid,bytearray(PAGE_SIZE))
-        #node = DLinkedNode(pid,bytearray(PAGE_SIZE))
+        node = DLinkedNode(pid)
         self.cache[pid]=node
         self._add_to_head(node)
         self.num_pages+=1
@@ -67,7 +61,7 @@ class Bufferpool:
         del self.cache[res.key]
         if(res.dirty is True):
             self.flush_to_disk(res.key)
-            self.dirty_pages.remove(res.key)
+            #self.dirty_pages.remove(res.key)
         self.num_pages-=1
         return SUCCESS
 
@@ -92,7 +86,7 @@ class Bufferpool:
     def access_finish(self,node,signal): #signal == 1: write; signal == 0: read
         if(signal == 1):
             node.dirty = True
-            self.dirty_pages.add(node.key)
+            #self.dirty_pages.add(node.key)
         node.pirLcount -= 1  #unpin this page
 
     def has_capacity(self):
@@ -100,9 +94,16 @@ class Bufferpool:
 
     
     def write_back_all_dirty_page(self):
+        curr = self.head
+        while(curr.next!=None):
+            if(curr.dirty==False):
+                self.flush_to_disk(curr.key)
+            curr=curr.next
+        """
         for page_id in self.dirty_pages:
             self.dirty_pages.remove(page_id)
             self.flush_to_disk(page_id)
+        """
 
     def flush_to_disk(self,pid):
         data_array = self.cache[pid].data
