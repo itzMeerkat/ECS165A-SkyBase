@@ -51,14 +51,11 @@ class Table:
         ofs = None
         l = mask.size
         for i in range(l):
-            if mask[i] > 0:
-                bpid = None
-                if dest == TO_TAIL_PAGE:
-                    bpid = bid[i]
-                pid, ofs = self.columns[i].write(cols[i], dest, bpid)
-                locs.append(pid)
-            else:
-                locs.append(None)
+            bpid = None
+            if dest == TO_TAIL_PAGE:
+                bpid = bid[i]
+            pid, ofs = self.columns[i].write(cols[i], dest, bpid)
+            locs.append(pid)
         #print("wrote", len(locs))
         return locs, ofs
 
@@ -98,26 +95,28 @@ class Table:
             self.columns[SCHEMA_ENCODING_COLUMN].inplace_update(
                 base_schema_loc, base_offset, base_record.mask)
 
+        
+        base_pids = None
+        if not base_rid is None:
+            base_pids = self.page_directory[base_rid].pids
+
+        if dest == TO_TAIL_PAGE:
+            for i in range(l):
+                if cols[i] is None:
+                    _pre_pid = self.page_directory[pre_rid].pids[i + 4]
+                    _pre_offset = self.page_directory[pre_rid].offset
+                    cols[i] = self.columns[i+4].read(_pre_pid, _pre_offset)
 
         # Combine meta cols and data cols
         meta_and_data = new_record.meta() + cols
         # b'1111' 
         write_mask.set_meta(15)
-        #print("Writing mask",write_mask.bits)
-        # print("Writing mask",write_mask.bits)
-
-        
-        base_pids = None
-        if not base_rid is None:
-            base_pids = self.page_directory[base_rid].pids
+        #print(cols)
         locs, offset = self._write_cols(
             write_mask, meta_and_data, dest, base_pids)
 
         # Merge old and new locations
-        if dest == TO_TAIL_PAGE:
-            for i in range(4,l+4):
-                if locs[i] is None:
-                    locs[i] = self.page_directory[pre_rid].pids[i]
+        
 
         new_record.pids = locs
         new_record.offset = offset

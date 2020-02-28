@@ -18,18 +18,6 @@ class Record:
         self.pids = []
         self.offset = None
 
-
-    # def get_indirection(self):
-    #     return self.indirection
-        
-
-    # def set_indirection(self, val):
-    #     if not val is None:
-    #         self.indirection = val
-    #     else:
-    #         self.indirection = 0
-
-
     def meta(self):
         if self.meta_data is None:
             self.meta_data = [self.indirection, self.rid, self.timestamp, self.mask.bits]
