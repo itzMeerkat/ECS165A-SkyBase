@@ -115,7 +115,7 @@ class Table:
         res = []
         record = self.page_directory[rid]
         latest_rec = None
-        print(rid, record)
+        #print(rid, record)
         if record.mask.bits > 0:
             #print("NEED HOP", record.mask.bits)
             latest = record.indirection

@@ -137,6 +137,7 @@ class Bufferpool:
         bt = 0
         if self.is_tail_pid(pid):
             bt = 1
+        #print(self.file_handler)
         meta_handler = self.file_handler[bt] #Meta data file handler
         f_handler = self.file_handler[bt+2] #Base/tail Data file handler 
         meta_handler.seek(0)

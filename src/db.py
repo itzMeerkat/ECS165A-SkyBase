@@ -52,6 +52,7 @@ class Database():
             tp_meta_handler = open(tp_meta, 'r+')
             bp_handler = open(bp_file, 'rb+')
             tp_handler = open(tp_file, 'rb+')
+            self.file_handler = [bp_meta_handler, tp_meta_handler, bp_handler, tp_handler]
             for tn in self.table_metas:
                 _meta = self.table_metas[tn]
                 self.create_table(tn,_meta['num_columns'],_meta['key'])
@@ -60,8 +61,9 @@ class Database():
             tp_meta_handler = open(tp_meta, 'w+')
             bp_handler = open(bp_file, 'wb+')
             tp_handler = open(tp_file, 'wb+')
+            self.file_handler = [bp_meta_handler, tp_meta_handler, bp_handler, tp_handler]
         
-        self.file_handler = [bp_meta_handler, tp_meta_handler, bp_handler, tp_handler]
+        
         #update the page directory 
         
     
@@ -85,7 +87,7 @@ class Database():
                 self.rid = len(self.page_directory) + 1
 
                 self.table_metas = r_file['table_metas']
-                print(self.table_metas)
+                #print(self.table_metas)
         
     def write_back_page_dir(self):
         with open(self.pd_file_path, "w") as outfile:
@@ -112,7 +114,7 @@ class Database():
     :param key: int             #Index of table key in columns
     """
     def create_table(self, name, num_columns, key):
-        print(self.page_directory)
+        #print(self.page_directory)
         table = Table(name, num_columns, key, self.file_handler,
                       self.page_directory, self.reverse_indirection, self)
         self.tables[name] = table

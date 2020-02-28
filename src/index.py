@@ -38,7 +38,7 @@ class Index:
         for rid in self.table.page_directory:
             r = self.table.get(rid, mask)
             #ks[rid] = r.columns[0]
-            ks[r[0]] = rid
+            ks[r[0]] = [rid]
         tree.update(ks)
         self.col_btree[column_number] = tree
         return True
@@ -81,7 +81,7 @@ class Index:
         return True
 
     def select_index(self, column_number, value):
-        if self.col_btree[column_number].has_key(value) == False:
+        if self.col_btree[column_number].has_key(value) <=0:
             return False
         found_rids = self.col_btree[column_number].__getitem__(value)
         return found_rids
