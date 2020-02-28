@@ -42,10 +42,11 @@ class Bufferpool:
     #function operate Double Linked List ends
 
     def new_page(self,pid,signal):
+        print("New page", pid)
         if(self.has_capacity() is False):
             sign = self._release_one_page()
             if(sign == FAIL):
-                pass
+                print("Release failed")
         if(signal == BASE_PAGE):
             node = DLinkedNode(pid)
             #node = DLinkedNode(pid,bytearray(PAGE_SIZE))
@@ -169,9 +170,12 @@ use pid as key of DLinkedNode.
 operate data in page directly
 """
 class DLinkedNode():
-    def __init__(self,key,page=Page()):
+    def __init__(self,key,page=None):
         self.key=key
-        self.page=page
+        if page is None:
+            self.page = Page()
+        else:
+            self.page=page
         self.dirty = False
         self.pirLcount=0  
         self.next=None

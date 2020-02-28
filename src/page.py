@@ -11,6 +11,7 @@ class Page:
     def has_capacity(self):
         if MAX_RECORDS > self.num_records:
             return True
+        print("PAGE FULLLLLLL", self.num_records)
         return False
 
     '''
@@ -26,7 +27,8 @@ class Page:
         self.data[l:r] = value.to_bytes(8, 'big')
 
         #self.bids[l:r] = bid.to_bytes(8, 'big')
-        return self.num_records
+        _r = self.num_records
+        return _r
 
     """
     TODO: Do we need to check if the offset valid?
