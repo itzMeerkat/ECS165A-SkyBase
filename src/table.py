@@ -22,7 +22,11 @@ class Table:
     :param num_columns: int     #Number of Columns: all columns are integer
     :param key: int             #Index of table key in columns
     """
+<<<<<<< HEAD
     def __init__(self, name, num_columns, key, file_handler,page_directory, db):
+=======
+    def __init__(self, name, num_columns, key, file_handler,page_directory,reverse_ind):
+>>>>>>> refactor
         self.name = name
         self.key = key
         self.num_columns = num_columns
@@ -31,31 +35,49 @@ class Table:
         self.columns = [Column(self.bufferpool, i+1) for i in range(self.num_columns + META_COL_SIZE)]
         # {rid: Record obj}
         self.page_directory = page_directory
+<<<<<<< HEAD
         self.db = db
         self.key_rid = {}
         self.deleted_base_rid = []
 
+=======
+        self.reverse_indirection = reverse_ind
+        self.rid = 1
 
-    def _write_cols(self, mask, cols, dest, bid,rid):
+        self.fake_index = {}
+
+        self.deleted_base_rid = []
+
+    def get_next_rid(self):
+        r = self.rid
+        self.rid += 1
+        return r
+
+>>>>>>> refactor
+
+    def _write_cols(self, mask, cols, dest, bid):
         #print("writing", mask.bits)
         locs = []
+        ofs = None
         l = mask.size
         for i in range(l):
-            if mask[i] > 0:
-                pid, offset = self.columns[i].write(cols[i], dest, bid, rid)
-                locs.append((pid, offset))
-            else:
-                locs.append(None)
+            bpid = None
+            if dest == TO_TAIL_PAGE:
+                bpid = bid[i]
+            pid, ofs = self.columns[i].write(cols[i], dest, bpid)
+            locs.append(pid)
         #print("wrote", len(locs))
-        return locs
+        return locs, ofs
 
     """
     TODO: mask: string for debuging, will switch to bitmap
     mask and cols must match and fit the schema
     """
     def put(self, rid, base_rid, key, write_mask, cols):
-        new_record = Record(rid, key, Bits('0' * len(cols)))
+        l = len(cols)
+        new_record = Record(rid, key, Bits('0' * l))
         dest = TO_TAIL_PAGE
+<<<<<<< HEAD
         #new_lid = None
         if base_rid is None:
             dest = TO_BASE_PAGE
@@ -63,46 +85,63 @@ class Table:
             #self.key_lid[key] = new_lid
             #self.lid_rid[new_lid] = rid
             self.key_rid[key] = rid
+=======
+
+        if base_rid is None:
+            dest = TO_BASE_PAGE
+            self.fake_index[key] = rid
+>>>>>>> refactor
         else:
             base_record = self.page_directory[base_rid]
             #old_loc = base_record.locations
-            pre_rid = base_record.get_indirection()
+            pre_rid = base_record.indirection
             if pre_rid == 0:
                 pre_rid = base_rid
-            new_record.set_indirection(pre_rid)
-            base_record.set_indirection(rid)
 
-            # print("base, pre rid:", base_rid, pre_rid)
+
+            new_record.indirection = pre_rid
+            base_record.indirection = rid
 
             # Inplace update base record indirection column
-            base_ind_loc = base_record.locations[INDIRECTION_COLUMN]
-            self.columns[INDIRECTION_COLUMN].inplace_update(base_ind_loc[0], base_ind_loc[1], base_record.get_indirection())
+            base_ind_pid = base_record.pids[INDIRECTION_COLUMN]
+            base_offset = base_record.offset
+            self.columns[INDIRECTION_COLUMN].inplace_update(
+                base_ind_pid, base_offset, base_record.indirection)
 
-            base_schema_loc = base_record.locations[SCHEMA_ENCODING_COLUMN]
+            base_schema_loc = base_record.pids[SCHEMA_ENCODING_COLUMN]
 
             base_record.mask.merge(write_mask)
 
             self.columns[SCHEMA_ENCODING_COLUMN].inplace_update(
-                base_schema_loc[0], base_schema_loc[1], base_record.mask)
+                base_schema_loc, base_offset, base_record.mask)
 
+        
+        base_pids = None
+        if not base_rid is None:
+            base_pids = self.page_directory[base_rid].pids
+
+        if dest == TO_TAIL_PAGE:
+            for i in range(l):
+                if cols[i] is None:
+                    _pre_pid = self.page_directory[pre_rid].pids[i + 4]
+                    _pre_offset = self.page_directory[pre_rid].offset
+                    cols[i] = self.columns[i+4].read(_pre_pid, _pre_offset)
 
         # Combine meta cols and data cols
         meta_and_data = new_record.meta() + cols
         # b'1111' 
         write_mask.set_meta(15)
-        #print("Writing mask",write_mask.bits)
-        # print("Writing mask",write_mask.bits)
-
-        locs = self._write_cols(write_mask, meta_and_data, dest, base_rid,rid)
+        #print(cols)
+        locs, offset = self._write_cols(
+            write_mask, meta_and_data, dest, base_pids)
 
         # Merge old and new locations
-        if dest == TO_TAIL_PAGE:
-            for i in range(len(locs)):
-                if locs[i] is None:
-                    locs[i] = self.page_directory[pre_rid].locations[i]
+        
 
-        new_record.locations = locs
+        new_record.pids = locs
+        new_record.offset = offset
         self.page_directory[rid] = new_record
+        self.reverse_indirection[rid] = base_rid
 
 
     def get(self, rid, read_mask):
@@ -111,7 +150,7 @@ class Table:
         latest_rec = None
         if record.mask.bits > 0:
             #print("NEED HOP", record.mask.bits)
-            latest = record.get_indirection()
+            latest = record.indirection
             latest_rec = self.page_directory[latest]
 
         #print("read mask", read_mask.bits, read_mask.size)
@@ -119,15 +158,15 @@ class Table:
             col_ind = i + 4
             v = read_mask[i]
             if v > 0:
-                tpid = record.locations[col_ind][0]
-                offset = record.locations[col_ind][1]
+                tpid = record.pids[col_ind]
+                offset = record.offset
 
                 # second hop needed
                 if record.mask[i] > 0:
                     #print("HOP")
-                    tpid = latest_rec.locations[col_ind][0]
-                    offset = latest_rec.locations[col_ind][1]
-
+                    tpid = latest_rec.pids[col_ind]
+                    offset = latest_rec.offset
+                #print("Reading", tpid, offset)
                 r = self.columns[col_ind].read(tpid, offset)
                 res.append(r)
         
@@ -139,6 +178,7 @@ class Table:
     # Get ready for the merge process
 
     def key_to_baseRid(self,key):
+<<<<<<< HEAD
         if not key in self.key_rid:
             return None
         #lid = self.key_lid[key]
@@ -150,6 +190,18 @@ class Table:
         self.deleted_base_rid.append(delete_rid)
         del self.key_rid[key]
         #del self.lid_rid[delete_lid]
+=======
+        if not key in self.fake_index:
+            return None
+        return self.fake_index[key]
+
+    # def set_delete_flag(self, key):
+    #     delete_lid = self.key_lid[key]
+    #     delete_rid = self.lid_rid[delete_lid]
+    #     self.deleted_base_rid.append(delete_rid)
+    #     del self.key_lid[key]
+    #     #del self.lid_rid[delete_lid]
+>>>>>>> refactor
     
     def __merge(self):
         pass
