@@ -42,7 +42,7 @@ class Bufferpool:
     #function operate Double Linked List ends
 
     def new_page(self,pid):
-        print("New page", pid)
+        #print("New page", pid)
         if(self.has_capacity() is False):
             sign = self._release_one_page()
             if(sign == FAIL):
