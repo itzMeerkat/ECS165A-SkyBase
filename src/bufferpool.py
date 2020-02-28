@@ -121,8 +121,8 @@ class Bufferpool:
         search_pid = "(" + str(pid) + ","
         begin = meta_handler.read().find(search_pid)
         if begin == -1:
-            f_handler.seek(0,2)
-            meta_handler.write(str(pid) + str(f_handler.tell()) + ")")
+            f_handler.seek(0, 2)
+            meta_handler.write(search_pid + str(f_handler.tell()) + ")")
         else:
             meta_handler.seek(begin)
             end = meta_handler.read().find(")")

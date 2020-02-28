@@ -10,7 +10,7 @@ class QueryResult:
     def __getitem__(self, key):
         return self.results[key]
     def __str__(self):
-        return str(self.columns)
+        return str(self.results)
     def __len__(self):
         return len(self.results)
 

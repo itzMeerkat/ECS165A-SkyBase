@@ -52,8 +52,9 @@ class Database():
             tp_meta_handler = open(tp_meta, 'r+')
             bp_handler = open(bp_file, 'rb+')
             tp_handler = open(tp_file, 'rb+')
-            _meta = self.table_metas[db_name]
-            self.create_table(db_name,_meta['num_columns'],_meta['key'])
+            for tn in self.table_metas:
+                _meta = self.table_metas[tn]
+                self.create_table(tn,_meta['num_columns'],_meta['key'])
         else:
             bp_meta_handler = open(bp_meta, 'w+')
             tp_meta_handler = open(tp_meta, 'w+')
@@ -74,13 +75,17 @@ class Database():
             with open(path, 'r+') as outfile:
                 r_file = json.load(outfile)
                 pd = r_file['page_directory']
-                for k in r_file:
+                for k in pd:
+                    #print(k)
                     _r = Record(None,None,None)
-                    self.page_directory[k] = _r.fromJSON(r_file[k])
+                    _r.fromJSON(pd[k])
+                    self.page_directory[int(k)] = _r
+                    #print(_r)
 
                 self.rid = len(self.page_directory) + 1
 
                 self.table_metas = r_file['table_metas']
+                print(self.table_metas)
         
     def write_back_page_dir(self):
         with open(self.pd_file_path, "w") as outfile:
@@ -107,6 +112,7 @@ class Database():
     :param key: int             #Index of table key in columns
     """
     def create_table(self, name, num_columns, key):
+        print(self.page_directory)
         table = Table(name, num_columns, key, self.file_handler,
                       self.page_directory, self.reverse_indirection, self)
         self.tables[name] = table

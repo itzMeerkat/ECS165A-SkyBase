@@ -36,14 +36,14 @@ class Record:
         self.pids = dic['pids']
         self.offset = dic['offset']
         m = dic['meta']
-        self.indirection = m[0]
-        self.rid = m[1]
-        self.timestamp = m[2]
+        self.indirection = int(m[0])
+        self.rid = int(m[1])
+        self.timestamp = int(m[2])
         self.mask = Bits("")
-        self.mask.bits = m[3]
+        self.mask.bits = int(m[3])
 
-    def __repr__(self):
-        return self.toJSON()
+    def __str__(self):
+        return str(self.toJSON())
 
 class Column:
     def __init__(self,bufferpool,column_index):

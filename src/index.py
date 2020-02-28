@@ -38,7 +38,7 @@ class Index:
         for rid in self.table.page_directory:
             r = self.table.get(rid, mask)
             #ks[rid] = r.columns[0]
-            ks[r.columns[0]] = rid
+            ks[r[0]] = rid
         tree.update(ks)
         self.col_btree[column_number] = tree
         return True
