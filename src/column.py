@@ -37,7 +37,7 @@ class Column:
 
     def _append_tail_page(self, base_group):
         pid = self.build_pid(base_group, self.len_tail[base_group] + 1)
-        self.bufferpool.new_page(pid,TAIL_PAGE)
+        self.bufferpool.new_page(pid)
         #self.tail_pages[pid] = Page()
         self.len_tail[base_group] += 1
         #print("Append tail:", pid)
@@ -45,7 +45,7 @@ class Column:
     
     def _append_base_page(self):
         pid = self.build_pid(-1, self.len_base)
-        self.bufferpool.new_page(pid,BASE_PAGE)
+        self.bufferpool.new_page(pid)
         #self.base_pages[pid] = Page()
         self.len_base += 1
 

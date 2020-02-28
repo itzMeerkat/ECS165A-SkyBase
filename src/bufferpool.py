@@ -6,7 +6,7 @@ class Bufferpool:
 
     def __init__(self, file_handler):
         self.cache={}
-        self.dirty_pages=set()     
+        #self.dirty_pages=set()     
         self.head=DLinkedNode(-1)
         self.tail=DLinkedNode(-2)
         self.head.next=self.tail 
@@ -41,19 +41,13 @@ class Bufferpool:
     #---------------------------------------------------------------------------------
     #function operate Double Linked List ends
 
-    def new_page(self,pid,signal):
+    def new_page(self,pid):
         print("New page", pid)
         if(self.has_capacity() is False):
             sign = self._release_one_page()
             if(sign == FAIL):
                 print("Release failed")
-        if(signal == BASE_PAGE):
-            node = DLinkedNode(pid)
-            #node = DLinkedNode(pid,bytearray(PAGE_SIZE))
-        else:
-            node = DLinkedNode(pid)
-            #node = DLinkedNode(pid,bytearray(PAGE_SIZE))
-        #node = DLinkedNode(pid,bytearray(PAGE_SIZE))
+        node = DLinkedNode(pid)
         self.cache[pid]=node
         self._add_to_head(node)
         self.num_pages+=1
@@ -67,7 +61,7 @@ class Bufferpool:
         del self.cache[res.key]
         if(res.dirty is True):
             self.flush_to_disk(res.key)
-            self.dirty_pages.remove(res.key)
+            #self.dirty_pages.remove(res.key)
         self.num_pages-=1
         return SUCCESS
 
@@ -92,7 +86,7 @@ class Bufferpool:
     def access_finish(self,node,signal): #signal == 1: write; signal == 0: read
         if(signal == 1):
             node.dirty = True
-            self.dirty_pages.add(node.key)
+            #self.dirty_pages.add(node.key)
         node.pirLcount -= 1  #unpin this page
 
     def has_capacity(self):
@@ -100,9 +94,16 @@ class Bufferpool:
 
     
     def write_back_all_dirty_page(self):
+        curr = self.head.next
+        while(curr.next!=None):
+            if(curr.dirty==True):
+                self.flush_to_disk(curr.key)
+            curr=curr.next
+        """
         for page_id in self.dirty_pages:
             self.dirty_pages.remove(page_id)
             self.flush_to_disk(page_id)
+        """
 
     def flush_to_disk(self,pid):
         data_array = self.cache[pid].data
@@ -181,50 +182,7 @@ class DLinkedNode():
         self.next=None
         self.prev=None
 
-        """
-        self.num_records = 0
-        self.free_index = [i for i in range(511, 0, -1)]
-        self.MAX_RECORDS = PAGE_SIZE / COL_SIZE - 1
-        self.lineage = 0 # remeber to put this on the first spot in the page when flushing
-        """
-
-    """
-    def has_capacity(self):
-        if self.MAX_RECORDS > self.num_records:
-            return True
-        return False
-
-    '''
-    Each write will write a 64-bit long data into page
-    TODO: benchmark of byte conversion
-    '''
-    def write(self, value):
-        #print(self.num_records)
-        self.lineage += 1
-        insert_index = self.free_index.pop()
-        l = insert_index * COL_SIZE
-        r = l + COL_SIZE
-        self.data[l:r] = value.to_bytes(8, 'big')
-        self.num_records += 1
-        return insert_index
-
-    def read(self, offset):
-        l = offset * COL_SIZE
-        r = l + COL_SIZE
-        value = int.from_bytes(self.data[l:r], 'big')
-        return value
-
-
-    def remove(self, index):
-        self.free_index.append(index)
-        self.num_records -= 1
-        return
-
-    def inplace_update(self, offset, val):
-        l = offset * COL_SIZE
-        r = l + COL_SIZE
-        self.data[l:r] = val.to_bytes(8, 'big')
-    """
+        
 
 
 
