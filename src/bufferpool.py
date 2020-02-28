@@ -109,7 +109,7 @@ class Bufferpool:
         data_array = self.cache[pid].data
         fh_index = 0
         #check if tail or base pid
-        if pid > ((1 << 32) - 1):
+        if self.is_tail_pid(pid):
             fh_index = 1
         #seek the meta data and data file to the beginning of the file
         meta_handler = self.file_handler[fh_index] #meta data
@@ -129,13 +129,13 @@ class Bufferpool:
             meta_handler.seek(begin)
             file_index = meta_handler.read(end).split(",")[1]
             f_handler.seek(int(file_index))
-        f_handler.write("".join(map(str, data_array)))
+        f_handler.write(data_array.to_disk())
 
      
     def read_from_disk(self,pid):
         #Create a new node and update with cache
         bt = 0
-        if pid > ((1 << 32 -1)):
+        if self.is_tail_pid(pid):
             bt = 1
         meta_handler = self.file_handler[bt] #Meta data file handler
         f_handler = self.file_handler[bt+2] #Base/tail Data file handler 
@@ -150,7 +150,7 @@ class Bufferpool:
         meta_handler.seek(begin)
         file_index = meta_handler.read(end).split(",")[1]
         f_handler.seek(int(file_index))
-        data_array = f_handler.read(4096)
+        data_array = bytearray(f_handler.read(4096))
         return self.add_page_from_disk(pid,data_array)
     
     def add_page_from_disk(self,pid,data):
@@ -158,13 +158,22 @@ class Bufferpool:
         if(self.has_capacity() is False):
             sign=self._release_one_page()
             if(sign == -1):
-                return FAIL  
-        node = DLinkedNode(pid)
+                return FAIL
+        p = Page()
+        p.num_records = 511
+        p.from_disk(data)
+        node = DLinkedNode(pid,p)
         self.cache[pid] = node
         self._add_to_head(node)
         self.num_pages+=1
         return SUCCESS
         #return node
+
+    def is_tail_pid(self, pid):
+        tpid = (self.col_index << 56) ^ pid
+        if tpid > ((1 << 28) - 1):
+            return True
+        return False
 
 """
 use pid as key of DLinkedNode.
