@@ -25,10 +25,12 @@ class Query:
 
     def insert(self, *columns):
         data = list(columns)
+
         next_rid = self.table.db.get_next_rid()
-        self.table.put(next_rid, None, data[self.table.key], Bits('11111'), data)
+        self.table.put(self.table.db.get_next_rid(), None, data[self.table.key], Bits('1'*len(data)), data)
         for col in range(self.table.num_columns):
             self.table.index.add_to_index(col, rid, data[col])
+
     """
     # Read a record with specified key
     """
@@ -63,13 +65,15 @@ class Query:
         base_rid = self.table.key_to_baseRid(key)
         next_rid = self.table.db.get_next_rid()
 
-        old_value = self.table.get(self, base_rid, mask)
+        old_value = self.table.get(base_rid, mask)
         self.table.put(next_rid, base_rid, key, mask, data)
-        new_value = self.table.get(self,next_rid,mask, data)
+        mask = Bits("")
+        mask.build_from_list(columns)
+        new_value = self.table.get(next_rid,mask)
         count = 0
         for i in mask:
             if i == 1:
-                self.table.index.col_btree[column].update_index(i, base_rid, old_value[count], new_value[count])
+                self.table.index.col_btree[count].update_index(i, base_rid, old_value[count], new_value[count])
                 count+= 1
 
 

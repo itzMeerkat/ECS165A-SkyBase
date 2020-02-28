@@ -130,10 +130,12 @@ class Table:
             latest_rec = self.page_directory[latest]
 
         #print("read mask", read_mask.bits, read_mask.size)
+        #print("Mask size", read_mask.size)
         for i in range(read_mask.size):
             col_ind = i + 4
             v = read_mask[i]
             if v > 0:
+                #print(col_ind)
                 tpid = record.pids[col_ind]
                 offset = record.offset
 
