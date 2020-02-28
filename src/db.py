@@ -13,18 +13,24 @@ class RecordJSONEncoder(json.JSONEncoder):
 class Database():
 
     def __init__(self):
-        self.tables = []
+        self.tables = {}
         self.file_handler = []
         self.page_directory = {}
         self.reverse_indirection = {}
         self.pg_file_path = ""
         self.rid = 1
-        pass
+        self.table_metas = {}
 
     def get_next_rid(self):
         r = self.rid
         self.rid += 1
         return r
+    def checkFileExist(self, *files):
+        f = list(files)
+        for i in f:
+            if not os.path.exists(i):
+                return False
+        return True
 
     def open(self, db_name):
         file_path = db_name.replace("~/", "")
@@ -32,54 +38,63 @@ class Database():
         tp_meta = file_path + "_tp_meta"
         bp_file = file_path + "_bp"
         tp_file = file_path + "_tp"
-        pd_file = file_path + "page_direction.json"
-        try:
+        pd_file = file_path + "page_directory.json"
+
+        self.pd_file_path = pd_file
+        self.init_page_dir(pd_file)
+
+        bp_meta_handler = None
+        tp_meta_handler = None
+        bp_handler = None
+        tp_handler = None
+        if self.checkFileExist(bp_meta, tp_meta, bp_file, tp_file):
             bp_meta_handler = open(bp_meta, 'r+')
-        except IOError:
-        # If not exists, create the file
-            bp_meta_handler = open(bp_meta, 'w+')
-
-        try:
             tp_meta_handler = open(tp_meta, 'r+')
-        except IOError:
-        # If not exists, create the file
+            bp_handler = open(bp_file, 'rb+')
+            tp_handler = open(tp_file, 'rb+')
+            _meta = self.table_metas[db_name]
+            self.create_table(db_name,_meta['num_columns'],_meta['key'])
+        else:
+            bp_meta_handler = open(bp_meta, 'w+')
             tp_meta_handler = open(tp_meta, 'w+')
-        try:
-            bp_handler = open(bp_file, 'r+')
-        except IOError:
-        # If not exists, create the file
-            bp_handler = open(bp_file, 'w+')
-
-        try:
-            tp_handler = open(tp_file, 'r+')
-        except IOError:
-        # If not exists, create the file
-            tp_handler = open(tp_file, 'w+')
-
+            bp_handler = open(bp_file, 'wb+')
+            tp_handler = open(tp_file, 'wb+')
+        
         self.file_handler = [bp_meta_handler, tp_meta_handler, bp_handler, tp_handler]
         #update the page directory 
-        self.pg_file_path = pd_file
-        self.init_page_dir()
+        
     
-    def init_page_dir(self):
-        if not os.path.exists(self.pg_file_path):
-            f = open(self.pg_file_path, 'w+')
+    def init_page_dir(self, path):
+        if not os.path.exists(path):
+            f = open(path, 'w+')
             f.close()
             self.page_directory = {}
             self.rid = 1
         else:
-            with open(self.pg_file_path, 'r') as outfile:
-                self.page_directory = json.load(outfile)
-            self.rid = len(self.page_directory) + 1
+            with open(path, 'r+') as outfile:
+                r_file = json.load(outfile)
+                pd = r_file['page_directory']
+                for k in r_file:
+                    _r = Record(None,None,None)
+                    self.page_directory[k] = _r.fromJSON(r_file[k])
+
+                self.rid = len(self.page_directory) + 1
+
+                self.table_metas = r_file['table_metas']
         
     def write_back_page_dir(self):
-        with open(self.pg_file_path, "w") as outfile:
-                pd_json = json.dumps(self.page_directory, cls=RecordJSONEncoder)
-                outfile.write(pd_json)
+        with open(self.pd_file_path, "w") as outfile:
+            #pd_json = json.dumps(self.page_directory, cls=RecordJSONEncoder)
+            table_meta = {}
+            for k in self.tables:
+                table_meta[k] = {'num_columns': self.tables[k].num_columns, 'key':self.tables[k].key}
+            big = {'table_metas': table_meta, 'page_directory': self.page_directory}
+            big_json = json.dumps(big, cls=RecordJSONEncoder)
+            outfile.write(big_json)
 
     def close(self):
         for table in self.tables:
-            table.bufferpool.write_back_all_dirty_page()
+            self.tables[table].bufferpool.write_back_all_dirty_page()
 
         for handler in self.file_handler:
             handler.close()
@@ -94,8 +109,13 @@ class Database():
     def create_table(self, name, num_columns, key):
         table = Table(name, num_columns, key, self.file_handler,
                       self.page_directory, self.reverse_indirection, self)
+        self.tables[name] = table
         return table
 
+    def get_table(self, name):
+        if name in self.tables:
+            return self.tables[name]
+        return None
     """
     # Deletes the specified table
     """

@@ -3,4 +3,7 @@ __pycache__
 *.txt
 *.pyc
 *.json
-ECS165.*
+ECS165_bp
+ECS165_bp_meta
+ECS165_tp
+ECS165_tp_meta

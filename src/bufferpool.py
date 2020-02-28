@@ -122,7 +122,7 @@ class Bufferpool:
         begin = meta_handler.read().find(search_pid)
         if begin == -1:
             f_handler.seek(0,2)
-            meta_handler.write(pid + str(f_handler.tell()) + ")")
+            meta_handler.write(str(pid) + str(f_handler.tell()) + ")")
         else:
             meta_handler.seek(begin)
             end = meta_handler.read().find(")")
@@ -170,7 +170,7 @@ class Bufferpool:
         #return node
 
     def is_tail_pid(self, pid):
-        tpid = (self.col_index << 56) ^ pid
+        tpid = ((1 << 56) -1) & pid
         if tpid > ((1 << 28) - 1):
             return True
         return False
@@ -184,9 +184,10 @@ class DLinkedNode():
         self.key=key
         if page is None:
             self.page = Page()
+            self.dirty = True
         else:
             self.page=page
-        self.dirty = False
+            self.dirty = False
         self.pirLcount=0  
         self.next=None
         self.prev=None
