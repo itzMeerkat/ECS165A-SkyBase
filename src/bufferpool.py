@@ -106,7 +106,7 @@ class Bufferpool:
         """
 
     def flush_to_disk(self,pid):
-        data_array = self.cache[pid].data
+        data_array = self.cache[pid].page.to_disk()
         fh_index = 0
         #check if tail or base pid
         if self.is_tail_pid(pid):
@@ -129,7 +129,7 @@ class Bufferpool:
             meta_handler.seek(begin)
             file_index = meta_handler.read(end).split(",")[1]
             f_handler.seek(int(file_index))
-        f_handler.write(data_array.to_disk())
+        f_handler.write(data_array)
 
      
     def read_from_disk(self,pid):

@@ -2,6 +2,7 @@ from .config import *
 from time import time
 from .page import Page
 from .bufferpool import *
+from .bits import Bits
 
 class Record:
     '''
@@ -23,6 +24,26 @@ class Record:
             self.meta_data = [self.indirection, self.rid, self.timestamp, self.mask.bits]
         return self.meta_data
 
+
+    def toJSON(self):
+        return {
+            'meta': self.meta(),
+            'pids': self.pids,
+            'offset': self.offset
+        }
+    
+    def fromJSON(self,dic):
+        self.pids = dic['pids']
+        self.offset = dic['offset']
+        m = dic['meta']
+        self.indirection = m[0]
+        self.rid = m[1]
+        self.timestamp = m[2]
+        self.mask = Bits("")
+        self.mask.bits = m[3]
+
+    def __repr__(self):
+        return self.toJSON()
 
 class Column:
     def __init__(self,bufferpool,column_index):

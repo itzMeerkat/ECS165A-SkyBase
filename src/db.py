@@ -1,7 +1,14 @@
 from .table import Table
+from .column import Record
 from .bufferpool import *
 import os
 import json
+
+class RecordJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Record):
+            return obj.toJSON()
+        return json.JSONEncoder.default(self, obj)
 
 class Database():
 
@@ -67,7 +74,7 @@ class Database():
         
     def write_back_page_dir(self):
         with open(self.pg_file_path, "w") as outfile:
-                pd_json = json.dumps(self.page_directory)
+                pd_json = json.dumps(self.page_directory, cls=RecordJSONEncoder)
                 outfile.write(pd_json)
 
     def close(self):

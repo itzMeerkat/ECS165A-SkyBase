@@ -42,7 +42,7 @@ for c in range(5):
         if error:
             print('select error on', key, ', column', c,':', results, ', correct:', index[key])
 print("Select finished")
-
+"""
 for _ in range(10):
     for key in keys:
         updated_columns = [None, None, None, None, None]
@@ -63,7 +63,7 @@ for _ in range(10):
             #     print('update on', original, 'and', updated_columns, ':', record)
             updated_columns[i] = None
 print("Update finished")
-
+"""
 for i in range(0, 100):
     r = sorted(sample(range(0, len(keys)), 2))
     column_sum = sum(map(lambda key: records[key][0], keys[r[0]: r[1] + 1]))
