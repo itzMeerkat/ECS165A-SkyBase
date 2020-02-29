@@ -2,17 +2,36 @@ from .table import Table, Record
 from .index import Index
 from src.bits import Bits
 
-class QueryResult:
+class Wrapper:
     def __init__(self):
-        self.results = []
-    def add_result(self, r):
-        self.results.append(r)
+        self.inlist = []
+    def additem(self, qr):
+        self.inlist.append(qr)
     def __getitem__(self, key):
-        return self.results[key]
-    def __str__(self):
-        return str(self.results)
+        return self.inlist[key]
+    def __contains__(self, item):
+        return any([qr.equals(item) for qr in self.inlist])
     def __len__(self):
-        return len(self.results)
+        return len(self.inlist)
+
+class QueryResult:
+    def __init__(self, res):
+        self.columns = res
+    def add_result(self, r):
+        self.columns.append(r)
+    def equals(self, item):
+        if (len(item)!=len(self)):
+            return False
+        for i, val in enumerate(self.columns):
+            if(val != item[i]):
+                return False
+        return True
+    def __getitem__(self, key):
+        return self.columns[key]
+    def __str__(self):
+        return str(self.columns)
+    def __len__(self):
+        return len(self.columns)
 
 class Query:
     """
@@ -54,7 +73,7 @@ class Query:
     """
 
     def select(self, key, column, query_columns):
-        found_records = QueryResult()
+        found_records = Wrapper()
         mask = ""
         for i in query_columns:
             if i == 1:
@@ -69,7 +88,7 @@ class Query:
         rids = self.table.index.select_index(column, key)
         #print(rids)
         for r in rids:
-            found_records.add_result(self.table.get(r, bits_mask))
+            found_records.additem(QueryResult(self.table.get(r, bits_mask)))
         return found_records
 
 
