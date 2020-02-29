@@ -20,9 +20,7 @@ class Record:
         self.offset = None
 
     def meta(self):
-        if self.meta_data is None:
-            self.meta_data = [self.indirection, self.rid, self.timestamp, self.mask.bits]
-        return self.meta_data
+        return [self.indirection, self.rid, self.timestamp, self.mask.bits]
 
 
     def toJSON(self):

@@ -28,7 +28,13 @@ class Query:
     """
 
     def delete(self, key):
-        self.table.set_delete_flag(key)
+
+
+        rids = self.table.index.select_index(self.table.key, key)
+        print("RIDS to delete", rids)
+        for i in rids:
+            self.table.index.remove_from_index(self.table.key, i,key)
+            self.table.delete(i)
         
 
     """
@@ -75,7 +81,10 @@ class Query:
         data = list(columns)
         mask = Bits("")
         mask.build_from_list(columns)
-        base_rid = self.table.key_to_baseRid(key)
+
+        base_rid = self.table.index.select_index(self.table.key, key)[0]
+
+        #base_rid = self.table.key_to_baseRid(key)
         next_rid = self.table.db.get_next_rid()
 
         old_value = self.table.get(base_rid, mask)
@@ -107,11 +116,9 @@ class Query:
                 mask += "0"
         bits_mask = Bits(mask)
 
+        rids = self.table.index.col_btree[self.table.key].values(start_range, end_range)
         res = 0
-        for i in range(start_range,end_range+1):
-            rid = self.table.key_to_baseRid(i)
-            if rid is None:
-                continue
-            r = self.table.get(rid, bits_mask)
+        for i in rids:
+            r = self.table.get(i[0], bits_mask)
             res += r[0]
         return res

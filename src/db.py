@@ -47,11 +47,15 @@ class Database():
         tp_meta_handler = None
         bp_handler = None
         tp_handler = None
+        bp_meta_content = None
+        tp_meta_content = None
         if self.checkFileExist(bp_meta, tp_meta, bp_file, tp_file):
             bp_meta_handler = open(bp_meta, 'r+')
             tp_meta_handler = open(tp_meta, 'r+')
             bp_handler = open(bp_file, 'rb+')
             tp_handler = open(tp_file, 'rb+')
+            #bp_meta_content = bp_handler.read()
+            #tp_meta_content = tp_handler.read()
             self.file_handler = [bp_meta_handler, tp_meta_handler, bp_handler, tp_handler]
             for tn in self.table_metas:
                 _meta = self.table_metas[tn]

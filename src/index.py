@@ -25,6 +25,11 @@ class Index:
     """
     # optional: Create index on specific column
     """
+    def is_tail_pid(self, pid):
+        tpid = ((1 << 56) -1) & pid
+        if tpid > ((1 << 28) - 1):
+            return True
+        return False
 
     def create_index(self, column_number):
         if column_number in self.col_btree:
@@ -36,9 +41,12 @@ class Index:
         tree = OOBTreePy()
         ks = {}
         for rid in self.table.page_directory:
-            r = self.table.get(rid, mask)
-            #ks[rid] = r.columns[0]
-            ks[r[0]] = [rid]
+            _m = self.table.page_directory[rid]
+            if _m.indirection == 0 or _m.indirection > rid:
+                #print("ADDING INDEX:",rid)
+                r = self.table.get(rid, mask)
+                #ks[rid] = r.columns[0]
+                ks[r[0]] = [rid]
         tree.update(ks)
         self.col_btree[column_number] = tree
         return True
@@ -61,11 +69,12 @@ class Index:
         rids = self.col_btree[column_number].__getitem__(value)
         if len(rids) == 1:
             #delete entire thing
-            self.col_btree[column_number].remove(value)
+            self.col_btree[column_number].pop(value)
         else:
             rids.remove(rid)
             self.col_btree[column_number].__setitem__(value, rids)
         return True
+
 
     def update_index(self, column_number, rid, old_value, new_value):
         if self.col_btree[column_number].has_key(old_value) > 0:

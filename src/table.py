@@ -58,7 +58,7 @@ class Table:
 
         if base_rid is None:
             dest = TO_BASE_PAGE
-            self.fake_index[key] = rid
+            #self.fake_index[key] = rid
         else:
             base_record = self.page_directory[base_rid]
             #old_loc = base_record.locations
@@ -74,7 +74,7 @@ class Table:
             base_ind_pid = base_record.pids[INDIRECTION_COLUMN]
             base_offset = base_record.offset
             self.columns[INDIRECTION_COLUMN].inplace_update(
-                base_ind_pid, base_offset, base_record.indirection)
+                base_ind_pid, base_offset, rid)
 
             base_schema_loc = base_record.pids[SCHEMA_ENCODING_COLUMN]
 
@@ -82,6 +82,9 @@ class Table:
 
             self.columns[SCHEMA_ENCODING_COLUMN].inplace_update(
                 base_schema_loc, base_offset, base_record.mask)
+
+            #self.page_directory[base_rid] = base_record
+            #print(self.page_directory[base_rid].indirection,base_record.indirection)
 
         
         base_pids = None
@@ -100,6 +103,7 @@ class Table:
         # b'1111' 
         write_mask.set_meta(15)
         #print(cols)
+        #print(base_pids)
         locs, offset = self._write_cols(
             write_mask, meta_and_data, dest, base_pids)
 
@@ -146,17 +150,15 @@ class Table:
     #After Retriving a LID for the record, then setting special val for the rids,
     # Get ready for the merge process
 
-    def key_to_baseRid(self,key):
-        if not key in self.fake_index:
-            return None
-        return self.fake_index[key]
+    # def key_to_baseRid(self,key):
+    #     if not key in self.fake_index:
+    #         return None
+    #     return self.fake_index[key]
 
-    # def set_delete_flag(self, key):
-    #     delete_lid = self.key_lid[key]
-    #     delete_rid = self.lid_rid[delete_lid]
-    #     self.deleted_base_rid.append(delete_rid)
-    #     del self.key_lid[key]
-    #     #del self.lid_rid[delete_lid]
+    def delete(self, rid):
+        #print("Deleting", rid)
+        #print(self.page_directory[rid])
+        self.put(0,rid,0,Bits("1"*self.num_columns),[0]*self.num_columns)
     
     def __merge(self):
         pass
