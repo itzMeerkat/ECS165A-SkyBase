@@ -59,7 +59,7 @@ class Database():
             self.file_handler = [bp_meta_handler, tp_meta_handler, bp_handler, tp_handler]
             for tn in self.table_metas:
                 _meta = self.table_metas[tn]
-                self.create_table(tn,_meta['num_columns'],_meta['key'])
+                self.create_table(tn,_meta['num_columns'],_meta['key'],_meta['col_tail_lens'])
         else:
             bp_meta_handler = open(bp_meta, 'w+')
             tp_meta_handler = open(tp_meta, 'w+')
@@ -98,7 +98,12 @@ class Database():
             #pd_json = json.dumps(self.page_directory, cls=RecordJSONEncoder)
             table_meta = {}
             for k in self.tables:
-                table_meta[k] = {'num_columns': self.tables[k].num_columns, 'key':self.tables[k].key}
+                
+                tl = {}
+                for i, c in enumerate(self.tables[k].columns):
+                    tl[i] = (c.len_tail,c.len_base)
+
+                table_meta[k] = {'num_columns': self.tables[k].num_columns, 'key':self.tables[k].key, 'col_tail_lens':tl}
             big = {'table_metas': table_meta, 'page_directory': self.page_directory}
             big_json = json.dumps(big, cls=RecordJSONEncoder)
             outfile.write(big_json)
@@ -117,10 +122,15 @@ class Database():
     :param num_columns: int     #Number of Columns: all columns are integer
     :param key: int             #Index of table key in columns
     """
-    def create_table(self, name, num_columns, key):
+    def create_table(self, name, num_columns, key, _len=None):
         #print(self.page_directory)
         table = Table(name, num_columns, key, self.file_handler,
                       self.page_directory, self.reverse_indirection, self)
+        if not _len is None:
+            for i in _len:
+                for j in _len[i][0]:
+                    table.columns[int(i)].len_tail[int(j)] = _len[i][0][j]
+                table.columns[int(i)].len_base = _len[i][1]
         self.tables[name] = table
         return table
 

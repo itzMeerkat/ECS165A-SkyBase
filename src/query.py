@@ -31,7 +31,7 @@ class Query:
 
 
         rids = self.table.index.select_index(self.table.key, key)
-        print("RIDS to delete", rids)
+        #print("RIDS to delete", rids)
         for i in rids:
             self.table.index.remove_from_index(self.table.key, i,key)
             self.table.delete(i)

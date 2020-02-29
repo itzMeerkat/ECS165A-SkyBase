@@ -158,7 +158,9 @@ class Table:
     def delete(self, rid):
         #print("Deleting", rid)
         #print(self.page_directory[rid])
-        self.put(0,rid,0,Bits("1"*self.num_columns),[0]*self.num_columns)
+        m=Bits("")
+        m.size=0
+        self.put(0,rid,0,m,[])
     
     def __merge(self):
         pass

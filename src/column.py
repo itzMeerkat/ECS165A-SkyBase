@@ -75,6 +75,7 @@ class Column:
 
     def _write_tail(self, val, base_group):
         #print(base_group)
+        #print(self.len_tail)
         tar_pid = self.build_pid(base_group, self.len_tail[base_group])
         if(self.len_tail[base_group] <= 0):
             tar_pid = self._append_tail_page(base_group)
