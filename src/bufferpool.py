@@ -86,6 +86,7 @@ class Bufferpool:
     def access_finish(self,node,signal): #signal == 1: write; signal == 0: read
         if(signal == 1):
             node.dirty = True
+            #print("SET DIRTY PAGE")
             #self.dirty_pages.add(node.key)
         node.pirLcount -= 1  #unpin this page
 
@@ -95,10 +96,10 @@ class Bufferpool:
     
     def write_back_all_dirty_page(self):
         curr = self.head.next
-        while(curr.next!=None):
-            if(curr.dirty==True):
+        while not curr.next is None:
+            if curr.dirty is True:
                 self.flush_to_disk(curr.key)
-            curr=curr.next
+            curr = curr.next
         """
         for page_id in self.dirty_pages:
             self.dirty_pages.remove(page_id)
@@ -106,6 +107,7 @@ class Bufferpool:
         """
 
     def flush_to_disk(self,pid):
+        #print("Writing back", pid)
         data_array = self.cache[pid].page.to_disk()
         fh_index = 0
         #check if tail or base pid
@@ -186,10 +188,11 @@ class DLinkedNode():
         if page is None:
             self.page = Page()
             self.dirty = True
+            #print("Newly created page")
         else:
             self.page=page
             self.dirty = False
-        self.pirLcount=0  
+        self.pirLcount=0
         self.next=None
         self.prev=None
 

@@ -47,8 +47,6 @@ class Query:
     """
 
     def delete(self, key):
-
-
         rids = self.table.index.select_index(self.table.key, key)
         #print("RIDS to delete", rids)
         for i in rids:

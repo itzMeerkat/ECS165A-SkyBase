@@ -5,6 +5,9 @@ from src.bits import Bits
 from .bufferpool import Bufferpool
 from .index import Index
 
+
+#import traceback
+
 class Table:
 
     """
@@ -23,7 +26,6 @@ class Table:
         self.page_directory = page_directory
         self.reverse_indirection = reverse_ind
         self.rid = 1
-        self.fake_index = {}
         self.deleted_base_rid = []
         self.index = Index(self)
 
@@ -52,6 +54,7 @@ class Table:
     mask and cols must match and fit the schema
     """
     def put(self, rid, base_rid, key, write_mask, cols):
+        #traceback.print_stack()
         l = len(cols)
         new_record = Record(rid, key, Bits('0' * l))
         dest = TO_TAIL_PAGE
@@ -158,9 +161,8 @@ class Table:
     def delete(self, rid):
         #print("Deleting", rid)
         #print(self.page_directory[rid])
-        m=Bits("")
-        m.size=0
-        self.put(0,rid,0,m,[])
+        m=Bits("1"*self.num_columns)
+        self.put(0,rid,0,m,[0]*self.num_columns)
     
     def __merge(self):
         pass

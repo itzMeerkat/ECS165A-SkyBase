@@ -99,7 +99,7 @@ class Column:
     def read(self, pid, offset):
         node = self.bufferpool.access(pid)
         val = node.page.read(offset)
-        self.bufferpool.access_finish(node,0)
+        self.bufferpool.access_finish(node, 0)
 
         return val
         
