@@ -52,7 +52,7 @@ class Table:
 
     def put(self, rid, base_rid, key, write_mask, cols):
         #traceback.print_stack()
-        l = len(cols)
+        l = self.num_columns
         new_record = Record(rid, key, Bits('0' * l))
         dest = TO_TAIL_PAGE
 

@@ -48,11 +48,16 @@ class Query:
 
     def delete(self, key):
         rids = self.table.index.select_index(self.table.key, key)
-        #print("RIDS to delete", rids)
+
+        # Try to acquire LOCK
+        LOCK_ACQUIRED = True
+        if not LOCK_ACQUIRED:
+            return False
+
         for i in rids:
             self.table.index.remove_from_index(self.table.key, i,key)
             self.table.delete(i)
-        
+        return True
 
     """
     # Insert a record with specified columns
@@ -65,6 +70,7 @@ class Query:
         self.table.put(next_rid, None, data[self.table.key], Bits('1'*len(data)), data)
         for col in range(self.table.num_columns):
             self.table.index.add_to_index(col, next_rid, data[col])
+        return True
 
     """
     # Read a record with specified key
@@ -87,7 +93,10 @@ class Query:
         #print(rids)
         for r in rids:
             found_records.additem(QueryResult(self.table.get(r, bits_mask)))
-        return found_records
+        
+        if len(found_records) > 0:
+            return found_records
+        return False
 
 
     """
@@ -97,23 +106,30 @@ class Query:
     def update(self, key, *columns):
         data = list(columns)
         mask = Bits("")
-        mask.build_from_list(columns)
+        mask.build_from_list(data)
 
         base_rid = self.table.index.select_index(self.table.key, key)[0]
 
-        #base_rid = self.table.key_to_baseRid(key)
-        next_rid = self.table.db.get_next_rid()
+        # Try to acquire LOCK
+        LOCK_ACQUIRED = True
+        if not LOCK_ACQUIRED:
+            return False
 
+        next_rid = self.table.db.get_next_rid()
         old_value = self.table.get(base_rid, mask)
         self.table.put(next_rid, base_rid, key, mask, data)
-        #mask = Bits("")
-        #mask.build_from_list(columns)
-        #new_value = self.table.get(next_rid,mask)
+        mask = Bits("")
+        mask.build_from_list(columns)
+        _columns=[i for i in columns if not i is None]
+        
         count = 0
         for i in mask:
             if i == 1:
-                self.table.index.update_index(i, base_rid, old_value[count], data[count])
+                self.table.index.update_index(
+                    i, base_rid, old_value[count], _columns[count])
                 count+= 1
+        
+        return True
 
 
     """
@@ -134,6 +150,8 @@ class Query:
         bits_mask = Bits(mask)
 
         rids = self.table.index.col_btree[self.table.key].values(start_range, end_range)
+        if len(rids) <= 0:
+            return False
         res = 0
         for i in rids:
             r = self.table.get(i[0], bits_mask)
