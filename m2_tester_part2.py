@@ -21,7 +21,6 @@ for _ in range(10):
         for j in range(1, grades_table.num_columns):
             value = randint(0, 20)
             records[key][j] = value
-
 keys = sorted(list(records.keys()))
 # for key in keys:
 #     print(records[key])
@@ -30,7 +29,7 @@ keys = sorted(list(records.keys()))
 for key in keys:
     record = query.select(key, 0, [1, 1, 1, 1, 1])[0]
     error = False
-    for i, column in enumerate(record):
+    for i, column in enumerate(record.columns):
         if column != records[key][i]:
             error = True
     if error:
@@ -41,6 +40,7 @@ deleted_keys = sample(keys, 100)
 for key in deleted_keys:
     query.delete(key)
     records.pop(key, None)
+print("Delete finished")
 
 for i in range(0, 100):
     r = sorted(sample(range(0, len(keys)), 2))
