@@ -47,10 +47,7 @@ class Table:
         #print("wrote", len(locs))
         return locs, ofs
 
-    """
-    TODO: mask: string for debuging, will switch to bitmap
-    mask and cols must match and fit the schema
-    """
+
     def put(self, rid, base_rid, key, write_mask, cols):
         l = len(cols)
         new_record = Record(rid, key, Bits('0' * l))
@@ -58,10 +55,8 @@ class Table:
 
         if base_rid is None:
             dest = TO_BASE_PAGE
-            #self.fake_index[key] = rid
         else:
             base_record = self.page_directory[base_rid]
-            #old_loc = base_record.locations
             pre_rid = base_record.indirection
             if pre_rid == 0:
                 pre_rid = base_rid
@@ -70,7 +65,6 @@ class Table:
             new_record.indirection = pre_rid
             base_record.indirection = rid
 
-            # Inplace update base record indirection column
             base_ind_pid = base_record.pids[INDIRECTION_COLUMN]
             base_offset = base_record.offset
             self.columns[INDIRECTION_COLUMN].inplace_update(
@@ -83,10 +77,7 @@ class Table:
             self.columns[SCHEMA_ENCODING_COLUMN].inplace_update(
                 base_schema_loc, base_offset, base_record.mask)
 
-            #self.page_directory[base_rid] = base_record
-            #print(self.page_directory[base_rid].indirection,base_record.indirection)
 
-        
         base_pids = None
         if not base_rid is None:
             base_pids = self.page_directory[base_rid].pids
@@ -98,16 +89,11 @@ class Table:
                     _pre_offset = self.page_directory[pre_rid].offset
                     cols[i] = self.columns[i+4].read(_pre_pid, _pre_offset)
 
-        # Combine meta cols and data cols
         meta_and_data = new_record.meta() + cols
-        # b'1111' 
         write_mask.set_meta(15)
-        #print(cols)
-        #print(base_pids)
+
         locs, offset = self._write_cols(
             write_mask, meta_and_data, dest, base_pids)
-
-        # Merge old and new locations
         new_record.pids = locs
         new_record.offset = offset
 
@@ -119,28 +105,22 @@ class Table:
         res = []
         record = self.page_directory[rid]
         latest_rec = None
-        #print(rid, record)
+
         if record.mask.bits > 0:
-            #print("NEED HOP", record.mask.bits)
             latest = record.indirection
             latest_rec = self.page_directory[latest]
 
-        #print("read mask", read_mask.bits, read_mask.size)
-        #print("Mask size", read_mask.size)
         for i in range(read_mask.size):
             col_ind = i + 4
             v = read_mask[i]
             if v > 0:
-                #print(col_ind)
                 tpid = record.pids[col_ind]
                 offset = record.offset
 
-                # second hop needed
                 if record.mask[i] > 0:
-                    #print("HOP")
                     tpid = latest_rec.pids[col_ind]
                     offset = latest_rec.offset
-                #print("Reading", tpid, offset)
+
                 r = self.columns[col_ind].read(tpid, offset)
                 res.append(r)
         
