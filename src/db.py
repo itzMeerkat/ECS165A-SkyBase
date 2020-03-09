@@ -13,8 +13,8 @@ class RecordJSONEncoder(json.JSONEncoder):
             return obj.toJSON()
         return json.JSONEncoder.default(self, obj)
 
-class Database():
 
+class Database():
     def __init__(self):
         self.tables = {}
         self.file_handler = []
@@ -61,12 +61,11 @@ class Database():
             tp_meta_handler = open(tp_meta, 'r+')
             bp_handler = open(bp_file, 'rb+')
             tp_handler = open(tp_file, 'rb+')
-            #bp_meta_content = bp_handler.read()
-            #tp_meta_content = tp_handler.read()
+
             self.file_handler = [bp_meta_handler, tp_meta_handler, bp_handler, tp_handler]
             for tn in self.table_metas:
                 _meta = self.table_metas[tn]
-                self.create_table(tn,_meta['num_columns'],_meta['key'],_meta['col_tail_lens'])
+                self.create_table(tn, _meta['num_columns'], _meta['key'], _meta['col_tail_lens'])
         else:
             bp_meta_handler = open(bp_meta, 'w+')
             tp_meta_handler = open(tp_meta, 'w+')
