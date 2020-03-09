@@ -1,8 +1,11 @@
 from .table import Table
 from .column import Record
 from .bufferpool import *
+
 import os
 import json
+
+from threading import Lock
 
 class RecordJSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -21,10 +24,15 @@ class Database():
         self.rid = 1
         self.table_metas = {}
 
+        self.RID_LOCK = Lock()
+
     def get_next_rid(self):
+        self.RID_LOCK.acquire()
         r = self.rid
         self.rid += 1
+        self.RID_LOCK.release()
         return r
+
     def checkFileExist(self, *files):
         f = list(files)
         for i in f:
@@ -47,8 +55,7 @@ class Database():
         tp_meta_handler = None
         bp_handler = None
         tp_handler = None
-        bp_meta_content = None
-        tp_meta_content = None
+
         if self.checkFileExist(bp_meta, tp_meta, bp_file, tp_file):
             bp_meta_handler = open(bp_meta, 'r+')
             tp_meta_handler = open(tp_meta, 'r+')
@@ -67,9 +74,6 @@ class Database():
             tp_handler = open(tp_file, 'wb+')
             self.file_handler = [bp_meta_handler, tp_meta_handler, bp_handler, tp_handler]
         
-        
-        #update the page directory 
-        
     
     def init_page_dir(self, path):
         if not os.path.exists(path):
@@ -82,20 +86,16 @@ class Database():
                 r_file = json.load(outfile)
                 pd = r_file['page_directory']
                 for k in pd:
-                    #print(k)
                     _r = Record(None,None,None)
                     _r.fromJSON(pd[k])
                     self.page_directory[int(k)] = _r
-                    #print(_r)
 
                 self.rid = len(self.page_directory) + 1
 
                 self.table_metas = r_file['table_metas']
-                #print(self.table_metas)
         
     def write_back_page_dir(self):
         with open(self.pd_file_path, "w") as outfile:
-            #pd_json = json.dumps(self.page_directory, cls=RecordJSONEncoder)
             table_meta = {}
             for k in self.tables:
                 
@@ -123,7 +123,6 @@ class Database():
     :param key: int             #Index of table key in columns
     """
     def create_table(self, name, num_columns, key, _len=None):
-        #print(self.page_directory)
         table = Table(name, num_columns, key, self.file_handler,
                       self.page_directory, self.reverse_indirection, self)
         if not _len is None:
@@ -138,15 +137,9 @@ class Database():
         if name in self.tables:
             return self.tables[name]
         return None
+
     """
     # Deletes the specified table
     """
     def drop_table(self, name):
         pass
-
-    """
-    def _get_rid(self):
-        self.next_rid += 1
-        return self.next_rid
-    """
-    

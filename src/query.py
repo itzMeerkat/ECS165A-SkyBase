@@ -86,17 +86,16 @@ class Query:
                 mask+="0"
         bits_mask = Bits(mask)
 
-        #rid = self.table.key_to_baseRid(key)
-        #print(key, rid)
-        #select_index(self, column_number, value)
         rids = self.table.index.select_index(column, key)
-        #print(rids)
+
+        if len(rids) <= 0:
+            return False
+
         for r in rids:
             found_records.additem(QueryResult(self.table.get(r, bits_mask)))
-        
-        if len(found_records) > 0:
-            return found_records
-        return False
+
+        return found_records
+
 
 
     """
