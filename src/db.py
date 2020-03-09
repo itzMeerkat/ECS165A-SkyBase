@@ -6,6 +6,7 @@ import os
 import json
 
 from threading import Lock
+from .locks import RecordLocks
 
 class RecordJSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -25,6 +26,8 @@ class Database():
         self.table_metas = {}
 
         self.RID_LOCK = Lock()
+
+        self.rid_lock = RecordLocks()
 
     def get_next_rid(self):
         self.RID_LOCK.acquire()

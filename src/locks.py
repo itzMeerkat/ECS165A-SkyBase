@@ -17,4 +17,4 @@ class RecordLocks:
         return True
 
     def release(self, rid):
-        self.locks[rid].release
+        self.locks[rid].release()

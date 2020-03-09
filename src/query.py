@@ -50,9 +50,12 @@ class Query:
         rids = self.table.index.select_index(self.table.key, key)
 
         # Try to acquire LOCK
-        LOCK_ACQUIRED = True
-        if not LOCK_ACQUIRED:
-            return False
+        for i,r in enumerate(rids):
+            LOCK_ACQUIRED = self.table.db.rid_lock.acquire(r)
+            if not LOCK_ACQUIRED:
+                for j in range(i):
+                    self.table.db.rid_lock.release(rids[j])
+                return False
 
         for i in rids:
             self.table.index.remove_from_index(self.table.key, i,key)
@@ -72,9 +75,6 @@ class Query:
             self.table.index.add_to_index(col, next_rid, data[col])
         return True
 
-    """
-    # Read a record with specified key
-    """
 
     def select(self, key, column, query_columns):
         found_records = Wrapper()
@@ -110,7 +110,7 @@ class Query:
         base_rid = self.table.index.select_index(self.table.key, key)[0]
 
         # Try to acquire LOCK
-        LOCK_ACQUIRED = True
+        LOCK_ACQUIRED = self.table.db.rid_lock.acquire(base_rid)
         if not LOCK_ACQUIRED:
             return False
 
@@ -127,7 +127,7 @@ class Query:
                 self.table.index.update_index(
                     i, base_rid, old_value[count], _columns[count])
                 count+= 1
-        
+        # TODO: Release lock? or release after transcation done
         return True
 
 
