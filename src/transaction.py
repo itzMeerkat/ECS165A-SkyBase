@@ -10,6 +10,7 @@ class Transaction:
 
     def __init__(self):
         self.queries = []
+        self.completed_count = 0
         pass
 
     """
@@ -30,6 +31,8 @@ class Transaction:
             # If the query has failed the transaction should abort
             if result == False:
                 return self.abort()
+
+            self.completed_count += 1
         return self.commit()
 
     def abort(self):

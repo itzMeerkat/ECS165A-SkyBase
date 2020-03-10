@@ -51,7 +51,6 @@ class Table:
 
 
     def put(self, rid, base_rid, key, write_mask, cols):
-        #traceback.print_stack()
         l = self.num_columns
         new_record = Record(rid, key, Bits('0' * l))
         dest = TO_TAIL_PAGE
@@ -128,21 +127,11 @@ class Table:
                 res.append(r)
         
         return res
-    
-    
-    #After Retriving a LID for the record, then setting special val for the rids,
-    # Get ready for the merge process
 
-    # def key_to_baseRid(self,key):
-    #     if not key in self.fake_index:
-    #         return None
-    #     return self.fake_index[key]
 
     def delete(self, rid):
-        #print("Deleting", rid)
-        #print(self.page_directory[rid])
         m=Bits("1"*self.num_columns)
-        self.put(0,rid,0,m,[0]*self.num_columns)
+        self.put(0, rid, 0, m, [0] * self.num_columns)
     
     def __merge(self):
         pass
