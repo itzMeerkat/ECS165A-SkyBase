@@ -51,23 +51,20 @@ class LockTable:
         counter.writers-=1
         lock.release()
 
+    def upgrade(self,rid):
+        lock.acquire(blocking=False)
+        counter=self.lock_table[rid]
+        if(counter.writers>0):
+            return False
+        else:
+            counter.readers=0
+            counter.writers+=1
+            return True
+        lock.release()
+
+#----------------------------------------------------------#
 class Counter:
 
     def __init__(self):
         self.readers=0
         self.writers=0
-#-----------------------------------------#
-"""
-class ReadLock:
-
-    def __init__(self):
-        pass
-
-
-#----------------------------------------#
-
-class WriteLock:
-
-    def __init__(self):
-        pass
-"""

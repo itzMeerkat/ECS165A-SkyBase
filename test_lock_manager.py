@@ -8,10 +8,11 @@ class Lock1:
         self.name = "thread1"
 
     def run(self):
+        print("lock1 read1",lock_table.acquire_read(1))
         print("lock1 acquire1",lock_table.acquire_write(1))
+        #print("upgrade",lock_table.upgrade(1))
+        #print("lock1 release write1",lock_table.release_write(1))
         print("lock1 acquire2",lock_table.acquire_write(2))
-        print("lock1 release1",lock_table.release_write(1))
-        #print("lock1 release2",lock_table.release(1))
 
 class Lock2:
 
@@ -22,6 +23,8 @@ class Lock2:
         print("lock2 acquire3",lock_table.acquire_write(3))
         print("lock2 acquire1",lock_table.acquire_write(1))
         print("lock2 acquire2",lock_table.acquire_write(2))
+        print("lock2 read1",lock_table.acquire_read(1))
+        print("lock2 read2",lock_table.acquire_read(2))
         
 class Lock3:
 
