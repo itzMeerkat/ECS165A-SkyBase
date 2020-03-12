@@ -1,4 +1,4 @@
-from threading import Lock
+from threading import Lock,RLock
 
 class RecordLocks:
     def __init__(self):
@@ -11,7 +11,7 @@ class RecordLocks:
             return r
 
         self.NEW_LOCK_LOCK.acquire()
-        self.locks[rid] = Lock()
+        self.locks[rid] = RLock()
         self.locks[rid].acquire()
         self.NEW_LOCK_LOCK.release()
         return True
