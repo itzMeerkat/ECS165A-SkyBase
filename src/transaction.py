@@ -10,6 +10,7 @@ class Transaction:
 
     def __init__(self):
         self.queries = []
+        self.tables = []
         self.completed_count = 0
         pass
 
@@ -37,8 +38,14 @@ class Transaction:
 
     def abort(self):
         #TODO: do roll-back and any other necessary operations
+        thread_id = threading.current_thread().ident
+        for table in self.tables:
+            table.rollback(thread_id)
         return False
 
     def commit(self):
         # TODO: commit to database
+        thread_id = threading.current_thread().ident
+        for table in self.tables:
+            table.commit(thread_id)
         return True

@@ -28,6 +28,7 @@ class Table:
         self.rid = 1
         self.deleted_base_rid = []
         self.index = Index(self)
+        
 
     def get_next_rid(self):
         r = self.rid
