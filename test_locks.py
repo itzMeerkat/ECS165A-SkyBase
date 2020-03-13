@@ -27,6 +27,7 @@ class Lock1:
     def run(self):
         print("lock1 acquire1",lock_table.acquire(1))
         print("lock1 acquire2",lock_table.acquire(2))
+        #print("lock1 release2",lock_table.release(1))
 
 class Lock2:
 
@@ -44,8 +45,8 @@ class Lock3:
         self.name = "thread3"
 
     def run(self):
-        #print("lock2 acquire3",self.lock_table.acquire(3,2))
-        print("lock3 acquire1",lock_table.acquire(3))
+        #print("lock2 acquire3",self.lock_table.acquire(1))
+        print("lock3 acquire3",lock_table.acquire(3))
         print("lock3 acquire2",lock_table.acquire(2))
 
 
