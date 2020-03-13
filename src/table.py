@@ -4,6 +4,7 @@ from src.column import Column, Record
 from src.bits import Bits
 from .bufferpool import Bufferpool
 from .index import Index
+from .lock_manager import *
 
 
 #import traceback
@@ -21,7 +22,7 @@ class Table:
         self.num_columns = num_columns
         self.db = db
         self.bufferpool = Bufferpool(file_handler)
-        self.columns = [Column(self.bufferpool, i+1) for i in range(self.num_columns + META_COL_SIZE)]
+        self.columns = [Column(self.bufferpool,i+1) for i in range(self.num_columns + META_COL_SIZE)]
         # {rid: Record obj}
         self.page_directory = page_directory
         self.reverse_indirection = reverse_ind

@@ -54,6 +54,9 @@ class Column:
 
     def _append_tail_page(self, base_group):
         pid = self.build_pid(base_group, self.len_tail[base_group] + 1)
+
+        #may lock bufferpool here
+
         self.bufferpool.new_page(pid)
         #self.tail_pages[pid] = Page()
         self.len_tail[base_group] += 1
@@ -62,6 +65,9 @@ class Column:
     
     def _append_base_page(self):
         pid = self.build_pid(-1, self.len_base)
+
+        #may lock bufferpool here
+
         self.bufferpool.new_page(pid)
         #self.base_pages[pid] = Page()
         self.len_base += 1
@@ -80,6 +86,7 @@ class Column:
         if(self.len_tail[base_group] <= 0):
             tar_pid = self._append_tail_page(base_group)
 
+        #may lock bufferpool here
         node = self.bufferpool.access(tar_pid)
         if(node.page.has_capacity() is False):
             tar_pid = self._append_tail_page(base_group)
@@ -97,6 +104,7 @@ class Column:
         return tar_pid, offset
 
     def read(self, pid, offset):
+        #may lock bufferpool here
         node = self.bufferpool.access(pid)
         val = node.page.read(offset)
         self.bufferpool.access_finish(node, 0)
@@ -119,7 +127,7 @@ class Column:
         if self.len_base - 1 < 0:
             tar_pid = self._append_base_page()
 
-
+        #we may lock bufferpool here
         node = self.bufferpool.access(tar_pid)
         if(node.page.has_capacity() is False):
             tar_pid = self._append_base_page()

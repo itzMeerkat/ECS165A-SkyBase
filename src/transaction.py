@@ -1,6 +1,7 @@
 from src.table import Table, Record
 from src.index import Index
 import threading
+from random import randint
 
 class Transaction:
 
@@ -12,7 +13,8 @@ class Transaction:
         Tid = int
         self.queries = []
         self.completed_count = 0
-        # self.results = []
+
+        self.id = randint(0, 10000000000)
         pass
 
     """
@@ -24,6 +26,7 @@ class Transaction:
     """
 
     def add_query(self, query, *args):
+        args.append(self.id)
         self.queries.append((query, args))
 
     # If you choose to implement this differently this method must still return True if transaction commits or False on abort
@@ -47,5 +50,5 @@ class Transaction:
     def commit(self):
         # TODO: commit to database
         thread_id = threading.current_thread().ident
-        table.commit(thread_id)
+        # table.commit(thread_id)
         return True
