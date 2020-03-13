@@ -1,6 +1,6 @@
 from src.table import Table, Record
 from src.index import Index
-
+import threading
 
 class Transaction:
 
@@ -9,9 +9,10 @@ class Transaction:
     """
 
     def __init__(self):
+        Tid = int
         self.queries = []
-        self.tables = []
         self.completed_count = 0
+        # self.results = []
         pass
 
     """
@@ -29,6 +30,7 @@ class Transaction:
     def run(self):
         for query, args in self.queries:
             result = query(*args)
+            # self.results.append(result)
             # If the query has failed the transaction should abort
             if result == False:
                 return self.abort()
@@ -39,13 +41,11 @@ class Transaction:
     def abort(self):
         #TODO: do roll-back and any other necessary operations
         thread_id = threading.current_thread().ident
-        for table in self.tables:
-            table.rollback(thread_id)
+        self.rollback(thread_id)
         return False
 
     def commit(self):
         # TODO: commit to database
         thread_id = threading.current_thread().ident
-        for table in self.tables:
-            table.commit(thread_id)
+        table.commit(thread_id)
         return True
