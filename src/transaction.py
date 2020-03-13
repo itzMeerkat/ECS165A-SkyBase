@@ -1,5 +1,6 @@
 from src.table import Table, Record
 from src.index import Index
+from random import randint
 
 
 class Transaction:
@@ -11,6 +12,7 @@ class Transaction:
     def __init__(self):
         self.queries = []
         self.completed_count = 0
+        self.id = randint(0, 10000000000)
         pass
 
     """
@@ -22,6 +24,7 @@ class Transaction:
     """
 
     def add_query(self, query, *args):
+        args.append(self.id)
         self.queries.append((query, args))
 
     # If you choose to implement this differently this method must still return True if transaction commits or False on abort

@@ -1,6 +1,6 @@
 from .table import Table, Record
 from .index import Index
-from .logger import Logger
+from .log import Logger
 from src.bits import Bits
 from .lock_manager import *
 
@@ -49,13 +49,14 @@ class Query:
     # Read a record with specified RID
     """
 
-    def delete(self,transaction_id, key):
+    def delete(self,key, transaction_id=None):
         #need to get values of the record before we delete it
         base_rid = self.table.index.select_index(self.table.key, key)[0]
         old_value = self.table.get(base_rid, Bits('1'*self.table.num_columns))
 
-        send_query = [transaction_id, ["delete", key], (old_value)]
-        self.logger.first_add(send_query)
+        if transaction_id is not None:
+            send_query = [transaction_id, ["delete", key], (old_value)]
+            self.logger.first_add(send_query)
 
         rids = self.table.index.select_index(self.table.key, key)
         # Try to acquire LOCK
@@ -82,29 +83,33 @@ class Query:
             self.table.index.remove_from_index(self.table.key, i,key)
             self.table.delete(i)
 
-        self.logger.finished_add(send_query)
+        if transaction_id is not None:
+            self.logger.finished_add(send_query)
         return True
 
     """
     # Insert a record with specified columns
     """
 
-    def insert(self, transaction_id, *columns):
+    def insert(self, *columns, transaction_id=None):
         data = list(columns)
         next_rid = self.table.db.get_next_rid()
-        send_query = [transaction_id, ["insert"], (next_rid, data)]
-        self.logger.first_add(send_query)
+        if transaction_id is not None:
+            send_query = [transaction_id, ["insert"], (next_rid, data)]
+            self.logger.first_add(send_query)
         self.table.put(next_rid, None, data[self.table.key], Bits('1'*len(data)), data)
         for col in range(self.table.num_columns):
             self.table.index.add_to_index(col, next_rid, data[col])
 
-        self.logger.finished_add(send_query)
+        if transaction_id is not None:
+            self.logger.finished_add(send_query)
         return True
 
 
-    def select(self, transaction_id, key, column, query_columns):
-        send_query = [transaction_id, ["select", key, column, query_columns], None]
-        self.logger.first_add(send_query)
+    def select(self, key, column, query_columns, transaction_id=None):
+        if transaction_id is not None:
+            send_query = [transaction_id, ["select", key, column, query_columns], None]
+            self.logger.first_add(send_query)
 
         found_records = Wrapper()
         mask = ""
@@ -131,7 +136,8 @@ class Query:
         for r in rids:
             found_records.additem(QueryResult(self.table.get(r, bits_mask)))
 
-        self.logger.finished_add(send_query)
+        if transaction_id is not None:
+            self.logger.finished_add(send_query)
         return found_records
 
 
@@ -140,7 +146,7 @@ class Query:
     # Update a record with specified key and columns
     """
 
-    def update(self, transaction_id, key, *columns):
+    def update(self, key, *columns, transaction_id=None):
         data = list(columns)
         mask = Bits("")
         mask.build_from_list(data)
@@ -158,8 +164,9 @@ class Query:
 
         all_old_values = self.table.get(base_rid, Bits('1'*self.table.num_columns))
 
-        send_query = [transaction_id, ["update", key, data], (all_old_values, data)]
-        self.logger.first_add(send_query)
+        if transaction_id is not None:
+            send_query = [transaction_id, ["update", key, data], (all_old_values, data)]
+            self.logger.first_add(send_query)
 
         self.table.put(next_rid, base_rid, key, mask, data)
         mask = Bits("")
@@ -173,8 +180,8 @@ class Query:
                     i, base_rid, old_value[count], _columns[count])
                 count+= 1
         # TODO: Release lock? or release after transcation done
-
-        self.logger.finished_add(send_query)
+        if transaction_id is not None:
+            self.logger.finished_add(send_query)
         return True
 
 
@@ -184,9 +191,10 @@ class Query:
     :param aggregate_columns: int  # Index of desired column to aggregate
     """
 
-    def sum(self, transaction_id, start_range, end_range, aggregate_column_index):
-        send_query = [transaction_id, ["sum",start_range, end_range, aggregate_column_index], None]
-        self.logger.first_add(send_query)
+    def sum(self, start_range, end_range, aggregate_column_index, transaction_id=None):
+        if transaction_id is not None:
+            send_query = [transaction_id, ["sum",start_range, end_range, aggregate_column_index], None]
+            self.logger.first_add(send_query)
 
         _m = [0]*self.table.num_columns
         _m[aggregate_column_index] = 1
@@ -206,7 +214,8 @@ class Query:
             r = self.table.get(i[0], bits_mask)
             res += r[0]
 
-        self.logger.finished_add(send_query)
+        if transaction_id is not None:
+            self.logger.finished_add(send_query)
         return res
 
     """
@@ -218,16 +227,18 @@ class Query:
     # Returns False if no record matches key or if target record is locked by 2PL.
     """
 
-    def increment(self, transaction_id, key, column):
+    def increment(self, key, column, transaction_id=None):
         r = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
         if r is not False:
-            send_query = [transaction_id, ["increment", key, column], (r[column], r[column] + 1)]
-            self.logger.first_add(send_query)
+            if transaction_id is not None:
+                send_query = [transaction_id, ["increment", key, column], (r[column], r[column] + 1)]
+                self.logger.first_add(send_query)
 
             updated_columns = [None] * self.table.num_columns
             updated_columns[column] = r[column] + 1
             u = self.update(key, *updated_columns)
 
-            self.logger.finished_add(send_query)
+            if transaction_id is not None:
+                self.logger.finished_add(send_query)
             return u
         return False
