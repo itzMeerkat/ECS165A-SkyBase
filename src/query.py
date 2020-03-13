@@ -1,6 +1,7 @@
 from .table import Table, Record
 from .index import Index
 from src.bits import Bits
+from .lock_manager import *
 
 class Wrapper:
     def __init__(self):
@@ -49,13 +50,22 @@ class Query:
     def delete(self, key):
         rids = self.table.index.select_index(self.table.key, key)
 
-        # Try to acquire LOCK
+        # Try to acquire write_lock
+        """
         for i,r in enumerate(rids):
             LOCK_ACQUIRED = self.table.db.rid_lock.acquire(r)
             if not LOCK_ACQUIRED:
                 for j in range(i):
                     self.table.db.rid_lock.release(rids[j])
                 return False
+        """
+        """
+        for r in rids:
+            LOCK_ACQUIRED = self.table.db.lock_manager.acquire_write(r) #we need tid here
+            if not LOCK_ACQUIRED:
+                #abort this transaction
+                return False
+        """
 
         for i in rids:
             self.table.index.remove_from_index(self.table.key, i,key)
@@ -70,6 +80,7 @@ class Query:
         data = list(columns)
 
         next_rid = self.table.db.get_next_rid()
+
         self.table.put(next_rid, None, data[self.table.key], Bits('1'*len(data)), data)
         for col in range(self.table.num_columns):
             self.table.index.add_to_index(col, next_rid, data[col])
@@ -87,6 +98,14 @@ class Query:
         bits_mask = Bits(mask)
 
         rids = self.table.index.select_index(column, key)
+        
+        #try to acquire read_lock
+        """
+        for r in rids:
+            LOCK_ACQUIRED = self.table.db.lock_manager.acquire_read(r) #we need tid here
+            if not LOCK_ACQUIRED:
+                #abort this transaction
+        """
 
         if len(rids) <= 0:
             return False
@@ -109,9 +128,10 @@ class Query:
 
         base_rid = self.table.index.select_index(self.table.key, key)[0]
 
-        # Try to acquire LOCK
-        LOCK_ACQUIRED = self.table.db.rid_lock.acquire(base_rid)
+        # Try to acquire write_lock
+        LOCK_ACQUIRED = self.table.db.lock_manager.acquire_write(base_rid)
         if not LOCK_ACQUIRED:
+            #abort this transaction
             return False
 
         next_rid = self.table.db.get_next_rid()
