@@ -8,11 +8,11 @@ class Lock1:
         self.name = "thread1"
 
     def run(self):
-        print("lock1 read1",lock_table.acquire_read(1))
-        print("lock1 acquire1",lock_table.acquire_write(1))
+        print("lock1 read1",lock_table.acquire_read(1,1))
+        print("lock1 write1",lock_table.acquire_write(1,1))
         #print("upgrade",lock_table.upgrade(1))
         #print("lock1 release write1",lock_table.release_write(1))
-        print("lock1 acquire2",lock_table.acquire_write(2))
+        print("lock1 write2",lock_table.acquire_write(2,1))
 
 class Lock2:
 
@@ -20,11 +20,11 @@ class Lock2:
         self.name = "thread2"
 
     def run(self):
-        print("lock2 acquire3",lock_table.acquire_write(3))
-        print("lock2 acquire1",lock_table.acquire_write(1))
-        print("lock2 acquire2",lock_table.acquire_write(2))
-        print("lock2 read1",lock_table.acquire_read(1))
-        print("lock2 read2",lock_table.acquire_read(2))
+        #print("lock2 write3",lock_table.acquire_write(3,2))
+        print("lock2 write1",lock_table.acquire_write(1,2))
+        #print("lock2 write2",lock_table.acquire_write(2,2))
+        #print("lock2 read1",lock_table.acquire_read(1,2))
+        #print("lock2 read2",lock_table.acquire_read(2,2))
         
 class Lock3:
 
@@ -33,9 +33,9 @@ class Lock3:
 
     def run(self):
         #print("lock2 acquire3",self.lock_table.acquire(1))
-        print("lock3 acquire3",lock_table.acquire_write(3))
-        print("lock3 acquire2",lock_table.acquire_write(2))
-        print("lock3 acquire4",lock_table.acquire_write(4))
+        print("lock3 write3",lock_table.acquire_write(3,3))
+        print("lock3 write2",lock_table.acquire_write(2,3))
+        print("lock3 write4",lock_table.acquire_write(4,3))
 
 
 """
@@ -52,7 +52,7 @@ lock3=Lock3()
 
 threads.append(threading.Thread(target=lock1.run,args=()))
 threads.append(threading.Thread(target=lock2.run,args=()))
-threads.append(threading.Thread(target=lock3.run,args=()))
+#threads.append(threading.Thread(target=lock3.run,args=()))
 
 
 for thread in threads:
