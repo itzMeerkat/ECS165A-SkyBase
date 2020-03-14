@@ -76,8 +76,8 @@ class Database():
             bp_handler = open(bp_file, 'wb+')
             tp_handler = open(tp_file, 'wb+')
             self.file_handler = [bp_meta_handler, tp_meta_handler, bp_handler, tp_handler]
-        
-    
+
+            
     def init_page_dir(self, path):
         if not os.path.exists(path):
             f = open(path, 'w+')
