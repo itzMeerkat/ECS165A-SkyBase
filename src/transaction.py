@@ -50,7 +50,7 @@ class Transaction:
 
     def commit(self):
         # TODO: commit to database
-        while self.xlocked_queries:
-            query, args = self.xlocked_queries.pop()
+        while self.lockedQ:
+            query, args = self.lockedQ.pop()
             query(*args, transaction_id=self.tid, release=True, rollback=False)
         return True
