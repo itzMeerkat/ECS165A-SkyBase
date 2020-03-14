@@ -140,4 +140,10 @@ class Table:
 
     def update_page_directory(self):
         pass
- 
+    
+    def release_locks(self, key, lock_type, column=0):
+        for rid in self.index.locate(key, column):
+            self.lock_manager.release_lock(rid, lock_type)
+
+
+  

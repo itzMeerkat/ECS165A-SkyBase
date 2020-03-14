@@ -13,7 +13,7 @@ class Transaction:
         Tid = int
         self.queries = []
         self.completed_count = 0
-
+        self.lockedQ = []
         self.id = randint(0, 10000000000)
         pass
 
@@ -32,23 +32,25 @@ class Transaction:
     # If you choose to implement this differently this method must still return True if transaction commits or False on abort
     def run(self):
         for query, args in self.queries:
-            result = query(*args)
-            # self.results.append(result)
+            result,xlocked = query(*args,transaction_id=self.tid)
             # If the query has failed the transaction should abort
             if result == False:
                 return self.abort()
-
             self.completed_count += 1
+            if xlocked == True:
+                self.lockedQ.append((query, args))
         return self.commit()
 
     def abort(self):
         #TODO: do roll-back and any other necessary operations
-        thread_id = threading.current_thread().ident
-        self.rollback(thread_id)
+        while self.lockedQ:
+            query, args = self.lockedQ.pop()
+            query(*args, transaction_id=self.tid, release=True, rollback=True)
         return False
 
     def commit(self):
         # TODO: commit to database
-        thread_id = threading.current_thread().ident
-        # table.commit(thread_id)
+        while self.xlocked_queries:
+            query, args = self.xlocked_queries.pop()
+            query(*args, transaction_id=self.tid, release=True, rollback=False)
         return True

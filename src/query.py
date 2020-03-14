@@ -91,7 +91,7 @@ class Query:
     # Insert a record with specified columns
     """
 
-    def insert(self, *columns, transaction_id=None):
+    def insert(self, *columns, transaction_id=None,release=False, rollback=False):
         data = list(columns)
         next_rid = self.table.db.get_next_rid()
         if transaction_id is not None:
@@ -100,13 +100,12 @@ class Query:
         self.table.put(next_rid, None, data[self.table.key], Bits('1'*len(data)), data)
         for col in range(self.table.num_columns):
             self.table.index.add_to_index(col, next_rid, data[col])
-
         if transaction_id is not None:
             self.logger.finished_add(send_query)
         return True
 
 
-    def select(self, key, column, query_columns, transaction_id=None):
+    def select(self, key, column, query_columns, transaction_id=None,release=False, rollback=False):
         if transaction_id is not None:
             send_query = [transaction_id, ["select", key, column, query_columns], None]
             self.logger.first_add(send_query)
@@ -123,12 +122,11 @@ class Query:
         rids = self.table.index.select_index(column, key)
         
         #try to acquire read_lock
-        """
+        
         for r in rids:
-            LOCK_ACQUIRED = self.table.db.lock_manager.acquire_read(r) #we need tid here
+            LOCK_ACQUIRED = self.table.db.lock_manager.acquire_read(r,transaction_id) #we need tid here
             if not LOCK_ACQUIRED:
-                #abort this transaction
-        """
+                return False, False
 
         if len(rids) <= 0:
             return False
@@ -138,35 +136,49 @@ class Query:
 
         if transaction_id is not None:
             self.logger.finished_add(send_query)
+            return found_records, False
+        
         return found_records
-
 
 
     """
     # Update a record with specified key and columns
     """
 
-    def update(self, key, *columns, transaction_id=None):
+    def update(self, key, *columns, transaction_id=None,release=False, rollback=False):
         data = list(columns)
         mask = Bits("")
         mask.build_from_list(data)
-
         base_rid = self.table.index.select_index(self.table.key, key)[0]
-
-        # Try to acquire write_lock
-        LOCK_ACQUIRED = self.table.db.lock_manager.acquire_write(base_rid)
-        if not LOCK_ACQUIRED:
-            #abort this transaction
-            return False
-
-        next_rid = self.table.db.get_next_rid()
-        old_value = self.table.get(base_rid, mask)
-
-        all_old_values = self.table.get(base_rid, Bits('1'*self.table.num_columns))
-
-        if transaction_id is not None:
-            send_query = [transaction_id, ["update", key, data], (all_old_values, data)]
-            self.logger.first_add(send_query)
+        
+        #Commit/Abort
+        if release:
+            #Abort
+            if rollback:
+                #find previous version in log and update it
+                send_query = [transaction_id, ["Update"], (base_rid, data)]
+                datafromLOG = self.logger.find_aborted(send_query)
+                #append the very first, oldest value to the update.
+                next_rid = self.table.db.get_next_rid()
+                data = datafromLOG
+                #self.table.rollback(key)
+                
+            #release all the locks
+            self.table.db.rid_lock.release(base_rid)
+            return 
+        else: 
+            # Try to acquire write_lock
+            LOCK_ACQUIRED = self.table.db.lock_manager.acquire_write(base_rid,transaction_id)
+            if not LOCK_ACQUIRED:
+                #abort this transaction
+                return False,False
+            
+            next_rid = self.table.db.get_next_rid()
+            old_value = self.table.get(base_rid, mask)
+            all_old_values = self.table.get(base_rid, Bits('1'*self.table.num_columns))
+            if transaction_id is not None:
+                send_query = [transaction_id, ["update", key, data], (all_old_values, data)]
+                self.logger.first_add(send_query)
 
         self.table.put(next_rid, base_rid, key, mask, data)
         mask = Bits("")
@@ -182,7 +194,7 @@ class Query:
         # TODO: Release lock? or release after transcation done
         if transaction_id is not None:
             self.logger.finished_add(send_query)
-        return True
+        return True,True
 
 
     """
