@@ -80,8 +80,6 @@ class Column:
 
 
     def _write_tail(self, val, base_group):
-        #print(base_group)
-        #print(self.len_tail)
         tar_pid = self.build_pid(base_group, self.len_tail[base_group])
         if(self.len_tail[base_group] <= 0):
             tar_pid = self._append_tail_page(base_group)
@@ -93,13 +91,9 @@ class Column:
             self.bufferpool.access_finish(node,0)    #unpin the page that is full
             node = self.bufferpool.access(tar_pid)
         
-        # if (self.len_tail[base_group] <= 0) or (self.tail_pages[tar_pid].has_capacity() is False):
-        #     tar_pid = self._append_tail_page(base_group)
-        
         
         offset = node.page.write(val)
         self.bufferpool.access_finish(node,1)
-        # offset = self.tail_pages[tar_pid].write(val)
         
         return tar_pid, offset
 
@@ -110,17 +104,6 @@ class Column:
         self.bufferpool.access_finish(node, 0)
 
         return val
-        
-        
-        # if self.is_tail_pid(pid):
-        #     #node = self.bufferpool.access(pid)
-        #     #print(pid)
-        #     return self.tail_pages[pid].read(offset)
-        # else:
-        #     #print(pid)
-        #     return self.base_pages[pid].read(offset)
-        
-        
 
     def _write_base(self, val):
         tar_pid = self.build_pid(-1, self.len_base - 1)
@@ -133,15 +116,10 @@ class Column:
             tar_pid = self._append_base_page()
             self.bufferpool.access_finish(node,1)
             node = self.bufferpool.access(tar_pid)
-
-        
-        # if (self.len_base - 1 < 0) or (self.base_pages[tar_pid].has_capacity() is False):  
-        #     tar_pid = self._append_base_page()
         
         offset = node.page.write(val)
         self.bufferpool.access_finish(node,1)
-        # offset = self.base_pages[tar_pid].write(val)
-        #tar_pid |= (self.col_index << 56)
+
         return tar_pid, offset
 
     def write(self, val, dest, base_pid):
@@ -155,13 +133,6 @@ class Column:
         node.page.inplace_update(offset,val)
         self.bufferpool.access_finish(node,1)
 
-        
-        # if self.is_tail_pid(pid):
-        #     self.tail_pages[pid].inplace_update(offset, val)
-        # else:
-        #     self.base_pages[pid].inplace_update(offset, val)
-        
-
 
     # Max 8bitscolumns, 28bits base groupsper table; and 28bits tail pages per base page group
     def build_pid(self, base_group, index):
@@ -172,7 +143,6 @@ class Column:
         if tpid > ((1 << 28) - 1):
             return True
         return False
-
 
     def base_pid_to_group(self, base_pid):
         tbase_pid = (self.col_index << 56) ^ base_pid

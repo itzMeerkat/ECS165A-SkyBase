@@ -78,6 +78,7 @@ class Query:
         #print("Insert")
         data = list(columns)
         next_rid = self.table.db.get_next_rid()
+        #print("Rid",next_rid)
         if transaction_id is not None:
             send_query = [transaction_id, ["insert"], (next_rid, data)]
             self.logger.first_add(send_query)
@@ -151,7 +152,7 @@ class Query:
                 #self.table.rollback(key)
                 
             #release all the locks
-            self.table.db.rid_lock.release(base_rid)
+            self.table.db.lock_manager.release_write(base_rid, transaction_id)
             return 
         else: 
             # Try to acquire write_lock

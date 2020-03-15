@@ -32,6 +32,7 @@ class Transaction:
 
     # If you choose to implement this differently this method must still return True if transaction commits or False on abort
     def run(self):
+        #print("Running")
         for query, args in self.queries:
             #print(args)
             result, xlocked = query(self.tid, False, False, *args)

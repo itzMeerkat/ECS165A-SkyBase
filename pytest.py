@@ -1,5 +1,6 @@
-def A(arg_one, *args):
-    print(arg_one, args)
+from threading import Lock
 
-
-A(4, 1, 2, 3)
+l = Lock()
+#l.acquire()
+r = l.acquire(blocking=False)
+print(r)

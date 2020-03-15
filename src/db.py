@@ -7,7 +7,7 @@ import json
 
 from threading import Lock
 #from .locks import RecordLocks
-from .lock_manager import *
+from src.lock_manager import LockTable
 
 class RecordJSONEncoder(json.JSONEncoder):
     def default(self, obj):
