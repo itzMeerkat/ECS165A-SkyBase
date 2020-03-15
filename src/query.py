@@ -1,6 +1,6 @@
 from .table import Table, Record
 from .index import Index
-from .log import Logger
+from .log import logger_inst
 from src.bits import Bits
 from .lock_manager import *
 
@@ -42,7 +42,7 @@ class Query:
 
     def __init__(self, table):
         self.table = table
-        self.logger = Logger()
+        self.logger = logger_inst
 
     """
     # internal Method
@@ -92,14 +92,18 @@ class Query:
     """
 
     def insert(self, *columns, transaction_id=None,release=False, rollback=False):
+        #print("Insert")
         data = list(columns)
         next_rid = self.table.db.get_next_rid()
         if transaction_id is not None:
             send_query = [transaction_id, ["insert"], (next_rid, data)]
             self.logger.first_add(send_query)
+
         self.table.put(next_rid, None, data[self.table.key], Bits('1'*len(data)), data)
+
         for col in range(self.table.num_columns):
             self.table.index.add_to_index(col, next_rid, data[col])
+        
         if transaction_id is not None:
             self.logger.finished_add(send_query)
         return True

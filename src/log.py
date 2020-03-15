@@ -79,11 +79,15 @@ class Logger():
                     aborted.append(line[5:])
         return aborted
 
+
+logger_inst = Logger()
+'''
 transaction_id = 1445551
 query_id = 874917017097107
 send_query = [transaction_id, ["insert"], (123, None, 123)]
-logger = Logger()
+
 logger.first_add(send_query)
+'''
 #logger.finished_add(send_query)
 #res = logger.find_aborted(send_query)
 #for i in res:

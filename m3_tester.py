@@ -7,8 +7,9 @@ from random import choice, randint, sample, seed
 
 import threading
 
+
 db = Database()
-db.open('/home/pkhorsand/165a-winter-2020-private/db')
+db.open('~/ECS165')
 grades_table = db.create_table('Grades', 5, 0)
 
 keys = []
@@ -24,11 +25,13 @@ for i in range(0, 10000):
     q = Query(grades_table)
     q.insert(*records[key])
 
+print("DB created")
 # Create transactions and assign them to workers
 transactions = []
 transaction_workers = []
 for i in range(num_threads):
     transaction_workers.append(TransactionWorker())
+
 
 for i in range(10000):
     key = choice(keys)
@@ -43,10 +46,11 @@ for i in range(10000):
         transaction.add_query(q.update, key, *[None, c, None, None, None])
     transaction_workers[i % num_threads].add_transaction(transaction)
 
+print("Transactions built")
 threads = []
 for transaction_worker in transaction_workers:
-    threads.append(threading.Thread(transaction_worker.run, args=()))
-
+    threads.append(threading.Thread(target=transaction_worker.run, args=()))
+print("Threads created")
 for thread in threads:
     thread.start()
 

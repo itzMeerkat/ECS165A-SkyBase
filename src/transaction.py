@@ -26,8 +26,9 @@ class Transaction:
     """
 
     def add_query(self, query, *args):
-        args.append(self.id)
-        self.queries.append((query, args))
+        argus = list(args)
+        argus.append(self.id)
+        self.queries.append((query, argus))
 
     # If you choose to implement this differently this method must still return True if transaction commits or False on abort
     def run(self):
