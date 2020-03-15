@@ -2,6 +2,7 @@ from src.table import Table, Record
 from src.index import Index
 import threading
 from random import randint
+from time import time
 
 class Transaction:
 
@@ -10,11 +11,10 @@ class Transaction:
     """
 
     def __init__(self):
-        Tid = int
         self.queries = []
         self.completed_count = 0
         self.lockedQ = []
-        self.id = randint(0, 10000000000)
+        self.tid = int(time()*100000 + randint(0, 100))
         pass
 
     """
@@ -27,13 +27,14 @@ class Transaction:
 
     def add_query(self, query, *args):
         argus = list(args)
-        argus.append(self.id)
+        #argus.append(self.tid)
         self.queries.append((query, argus))
 
     # If you choose to implement this differently this method must still return True if transaction commits or False on abort
     def run(self):
         for query, args in self.queries:
-            result,xlocked = query(*args,transaction_id=self.tid)
+            #print(args)
+            result, xlocked = query(self.tid, False, False, *args)
             # If the query has failed the transaction should abort
             if result == False:
                 return self.abort()
@@ -46,12 +47,12 @@ class Transaction:
         #TODO: do roll-back and any other necessary operations
         while self.lockedQ:
             query, args = self.lockedQ.pop()
-            query(*args, transaction_id=self.tid, release=True, rollback=True)
+            query(self.tid, True, True, *args)
         return False
 
     def commit(self):
         # TODO: commit to database
         while self.lockedQ:
             query, args = self.lockedQ.pop()
-            query(*args, transaction_id=self.tid, release=True, rollback=False)
+            query(self.tid, True, False, *args)
         return True

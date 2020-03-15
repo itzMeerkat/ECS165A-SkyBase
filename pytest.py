@@ -1,5 +1,5 @@
-def A():
-    return 1,2
+def A(arg_one, *args):
+    print(arg_one, args)
 
-a,_ = A()
-print(a)
+
+A(4, 1, 2, 3)

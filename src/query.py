@@ -49,7 +49,7 @@ class Query:
     # Read a record with specified RID
     """
 
-    def delete(self,key, transaction_id=None):
+    def delete(self, transaction_id, release, rollback, key):
         #need to get values of the record before we delete it
         base_rid = self.table.index.select_index(self.table.key, key)[0]
         old_value = self.table.get(base_rid, Bits('1'*self.table.num_columns))
@@ -62,23 +62,6 @@ class Query:
         # Try to acquire LOCK
 
         # Try to acquire write_lock
-        """
->>>>>>> 1004cd990eddaeaa4a962585b2d3bc304578905d
-        for i,r in enumerate(rids):
-            LOCK_ACQUIRED = self.table.db.rid_lock.acquire(r)
-            if not LOCK_ACQUIRED:
-                for j in range(i):
-                    self.table.db.rid_lock.release(rids[j])
-                return False
-        """
-        """
-        for r in rids:
-            LOCK_ACQUIRED = self.table.db.lock_manager.acquire_write(r) #we need tid here
-            if not LOCK_ACQUIRED:
-                #abort this transaction
-                return False
-        """
-
         for i in rids:
             self.table.index.remove_from_index(self.table.key, i,key)
             self.table.delete(i)
@@ -91,7 +74,7 @@ class Query:
     # Insert a record with specified columns
     """
 
-    def insert(self, *columns, transaction_id=None,release=False, rollback=False):
+    def insert(self, transaction_id, release, rollback, *columns):
         #print("Insert")
         data = list(columns)
         next_rid = self.table.db.get_next_rid()
@@ -108,8 +91,8 @@ class Query:
             self.logger.finished_add(send_query)
         return True
 
-
-    def select(self, key, column, query_columns, transaction_id=None,release=False, rollback=False):
+    def select(self, transaction_id, release, rollback, key, column, query_columns):
+        
         if transaction_id is not None:
             send_query = [transaction_id, ["select", key, column, query_columns], None]
             self.logger.first_add(send_query)
@@ -149,7 +132,7 @@ class Query:
     # Update a record with specified key and columns
     """
 
-    def update(self, key, *columns, transaction_id=None,release=False, rollback=False):
+    def update(self, transaction_id, release, rollback, key, *columns):
         data = list(columns)
         mask = Bits("")
         mask.build_from_list(data)
@@ -207,7 +190,7 @@ class Query:
     :param aggregate_columns: int  # Index of desired column to aggregate
     """
 
-    def sum(self, start_range, end_range, aggregate_column_index, transaction_id=None):
+    def sum(self, transaction_id, release, rollback, start_range, end_range, aggregate_column_index):
         if transaction_id is not None:
             send_query = [transaction_id, ["sum",start_range, end_range, aggregate_column_index], None]
             self.logger.first_add(send_query)

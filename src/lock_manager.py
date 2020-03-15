@@ -11,7 +11,7 @@ class LockTable:
         lock.acquire(blocking=False)
         if rid in self.lock_table:
             counter=self.lock_table[rid]
-            if(counter.writers==0 | counter.writer_transaction==tid):
+            if(counter.writers==0 or counter.writer_transaction==tid):
                 counter.reader_transactions.add(tid)
                 counter.readers+=1
                 return True
@@ -43,7 +43,7 @@ class LockTable:
                 counter.writer_transaction=tid
                 counter.writers+=1
                 return True
-            elif(counter.readers==1 & tid in counter.reader_transactions):
+            elif(counter.readers==1 and tid in counter.reader_transactions):
                 counter.reader_transactions.remove(tid)
                 counter.readers=0
                 counter.writer_transaction=tid
