@@ -49,6 +49,7 @@ class Transaction:
         while self.lockedQ:
             query, args = self.lockedQ.pop()
             query(self.tid, True, True, *args)
+        print("Transaction Aborted")
         return False
 
     def commit(self):
@@ -56,4 +57,5 @@ class Transaction:
         while self.lockedQ:
             query, args = self.lockedQ.pop()
             query(self.tid, True, False, *args)
+        print("Transcation Commited")
         return True

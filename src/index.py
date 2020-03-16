@@ -56,15 +56,17 @@ class Index:
         if not column_number in self.col_btree:
             self.create_index(column_number)
         rids = [rid]
-        if self.col_btree[column_number].has_key(value) == False:
+        if self.col_btree[column_number].has_key(value) <= 0:
             self.col_btree[column_number].__setitem__(value, rids)
         else:
+            #if value == 0:
+            #    print("WTF", value, rids)
             rids += self.col_btree[column_number].__getitem__(value)
             self.col_btree[column_number].__setitem__(value, list(set(rids)))
         return True
 
     def remove_from_index(self, column_number, rid, value):
-        if self.col_btree[column_number].has_key(value) == False:
+        if self.col_btree[column_number].has_key(value) <= 0:
             return False
         rids = self.col_btree[column_number].__getitem__(value)
         if len(rids) == 1:
@@ -77,11 +79,15 @@ class Index:
 
 
     def update_index(self, column_number, rid, old_value, new_value):
-        if self.col_btree[column_number].has_key(old_value) > 0:
-            return False
+        # if self.col_btree[column_number].has_key(old_value) > 0:
+        #     print("FALSE")
+        #     return False
+       # print(old_value, new_value)
         old_rids = self.col_btree[column_number].__getitem__(old_value)
         old_rids.remove(rid)
-        new_rids = self.col_btree[column_number].__getitem__(new_value)
+        new_rids = []
+        if self.col_btree[column_number].has_key(new_value) > 0:
+            new_rids = self.col_btree[column_number].__getitem__(new_value)
         new_rids.append(rid)
         update_dict = {}
         update_dict[old_value] = old_rids

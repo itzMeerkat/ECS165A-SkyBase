@@ -94,9 +94,9 @@ class Query:
 
     def select(self, transaction_id, release, rollback, key, column, query_columns):
         
-        if transaction_id is not None:
-            send_query = [transaction_id, ["select", key, column, query_columns], None]
-            self.logger.first_add(send_query)
+        # if transaction_id is not None:
+        #     send_query = [transaction_id, ["select", key, column, query_columns], None]
+        #     self.logger.first_add(send_query)
 
         found_records = Wrapper()
         mask = ""
@@ -117,16 +117,16 @@ class Query:
                 return False, False
 
         if len(rids) <= 0:
-            return False
+            return False, False
 
         for r in rids:
             found_records.additem(QueryResult(self.table.get(r, bits_mask)))
 
-        if transaction_id is not None:
-            self.logger.finished_add(send_query)
-            return found_records, False
+        # if transaction_id is not None:
+        #     self.logger.finished_add(send_query)
+        #     return found_records, False
         
-        return found_records
+        return found_records, False
 
 
     """
@@ -168,21 +168,21 @@ class Query:
                 send_query = [transaction_id, ["update", key, data], (all_old_values, data)]
                 self.logger.first_add(send_query)
 
-        self.table.put(next_rid, base_rid, key, mask, data)
-        mask = Bits("")
-        mask.build_from_list(columns)
-        _columns=[i for i in columns if not i is None]
-        
-        count = 0
-        for i in mask:
-            if i == 1:
-                self.table.index.update_index(
-                    i, base_rid, old_value[count], _columns[count])
-                count+= 1
-        # TODO: Release lock? or release after transcation done
-        if transaction_id is not None:
-            self.logger.finished_add(send_query)
-        return True,True
+            self.table.put(next_rid, base_rid, key, mask, data)
+            mask = Bits("")
+            mask.build_from_list(columns)
+            _columns=[i for i in columns if not i is None]
+            #print(old_value, _columns, mask.bits, base_rid)
+            count = 0
+            for i in mask:
+                if i == 1:
+                    self.table.index.update_index(
+                        i, base_rid, old_value[count], _columns[count])
+                    count+= 1
+            # TODO: Release lock? or release after transcation done
+            if transaction_id is not None:
+                self.logger.finished_add(send_query)
+            return True,True
 
 
     """

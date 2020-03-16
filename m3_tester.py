@@ -15,7 +15,7 @@ grades_table = db.create_table('Grades', 5, 0)
 keys = []
 records = {}
 seed(3562901)
-num_threads = 1
+num_threads = 8
 
 # Generate random records
 for i in range(0, 10000):
@@ -33,7 +33,7 @@ for i in range(num_threads):
     transaction_workers.append(TransactionWorker())
 
 
-for i in range(10000):
+for i in range(100):
     key = choice(keys)
     record = records[key]
     c = record[1]
@@ -58,5 +58,5 @@ for thread in threads:
     thread.join()
 
 num_committed_transactions = sum(t.result for t in transaction_workers)
-
+print(num_committed_transactions)
 db.close()
