@@ -4,6 +4,8 @@ from .log import logger_inst
 from src.bits import Bits
 from .lock_manager import *
 
+
+import traceback
 class Wrapper:
     def __init__(self):
         self.inlist = []
@@ -118,7 +120,7 @@ class Query:
 
         if len(rids) <= 0:
             return False, False
-
+        print("Select", rids)
         for r in rids:
             found_records.additem(QueryResult(self.table.get(r, bits_mask)))
 
@@ -162,9 +164,13 @@ class Query:
                 print("Acquire lock fail")
                 return False,False
             
+            
             next_rid = self.table.db.get_next_rid()
             old_value = self.table.get(base_rid, mask)
+            
             all_old_values = self.table.get(base_rid, Bits('1'*self.table.num_columns))
+            print("Update", base_rid, key, all_old_values,data)
+            #traceback.print_stack()
             if transaction_id is not None:
                 send_query = [transaction_id, ["update", key, data], (all_old_values, data)]
                 self.logger.first_add(send_query)
@@ -192,11 +198,7 @@ class Query:
     :param aggregate_columns: int  # Index of desired column to aggregate
     """
 
-    def sum(self, transaction_id, release, rollback, start_range, end_range, aggregate_column_index):
-        if transaction_id is not None:
-            send_query = [transaction_id, ["sum",start_range, end_range, aggregate_column_index], None]
-            self.logger.first_add(send_query)
-
+    def sum(self, start_range, end_range, aggregate_column_index):
         _m = [0]*self.table.num_columns
         _m[aggregate_column_index] = 1
         mask = ""
@@ -215,8 +217,6 @@ class Query:
             r = self.table.get(i[0], bits_mask)
             res += r[0]
 
-        if transaction_id is not None:
-            self.logger.finished_add(send_query)
         return res
 
     """
@@ -228,8 +228,8 @@ class Query:
     # Returns False if no record matches key or if target record is locked by 2PL.
     """
 
-    def increment(self, key, column, transaction_id=None):
-        r = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
+    def increment(self, transaction_id, release, rollback, key, column):
+        r = self.select(None, False, False, key, self.table.key, [1] * self.table.num_columns)[0]
         if r is not False:
             if transaction_id is not None:
                 send_query = [transaction_id, ["increment", key, column], (r[column], r[column] + 1)]
@@ -237,7 +237,7 @@ class Query:
 
             updated_columns = [None] * self.table.num_columns
             updated_columns[column] = r[column] + 1
-            u = self.update(key, *updated_columns)
+            u = self.update(None, False, False, key, *updated_columns)
 
             if transaction_id is not None:
                 self.logger.finished_add(send_query)

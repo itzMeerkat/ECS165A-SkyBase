@@ -7,12 +7,12 @@ import threading
 from random import choice, randint, sample, seed
 
 db = Database()
-db.open('/home/pkhorsand/165a-winter-2020-private/db')
+db.open('~/ECS165')
 grades_table = db.create_table('Grades', 5, 0)
 
 keys = []
 records = {}
-num_threads = 8
+num_threads = 2
 seed(8739878934)
 
 # Generate random records
@@ -21,7 +21,7 @@ for i in range(0, 10000):
     keys.append(key)
     records[key] = [key, 0, 0, 0, 0]
     q = Query(grades_table)
-    q.insert(*records[key])
+    q.insert(None, False, False, *records[key])
 
 # create TransactionWorkers
 transaction_workers = []
