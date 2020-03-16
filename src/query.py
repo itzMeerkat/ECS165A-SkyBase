@@ -159,6 +159,7 @@ class Query:
             LOCK_ACQUIRED = self.table.db.lock_manager.acquire_write(base_rid,transaction_id)
             if not LOCK_ACQUIRED:
                 #abort this transaction
+                print("Acquire lock fail")
                 return False,False
             
             next_rid = self.table.db.get_next_rid()

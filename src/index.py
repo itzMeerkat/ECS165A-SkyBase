@@ -1,6 +1,6 @@
 from BTrees.OOBTree import OOBTreePy
 from src.bits import Bits
-
+from threading import Lock
 """
 # optional: Indexes the specified column of the specified table to speed up select queries
 # This data structure is usually a B-Tree
@@ -13,6 +13,7 @@ class Index:
         self.col_btree = {}
         self.table = table
         self.create_index(0)
+        self._lock = Lock()
 
 
     """
@@ -53,6 +54,7 @@ class Index:
 
     
     def add_to_index(self, column_number, rid, value):
+        self._lock.acquire()
         if not column_number in self.col_btree:
             self.create_index(column_number)
         rids = [rid]
@@ -63,10 +65,14 @@ class Index:
             #    print("WTF", value, rids)
             rids += self.col_btree[column_number].__getitem__(value)
             self.col_btree[column_number].__setitem__(value, list(set(rids)))
+        self._lock.release()
         return True
+        
 
     def remove_from_index(self, column_number, rid, value):
+        self._lock.acquire()
         if self.col_btree[column_number].has_key(value) <= 0:
+            self._lock.release()
             return False
         rids = self.col_btree[column_number].__getitem__(value)
         if len(rids) == 1:
@@ -75,15 +81,18 @@ class Index:
         else:
             rids.remove(rid)
             self.col_btree[column_number].__setitem__(value, rids)
+        self._lock.release()
         return True
 
 
     def update_index(self, column_number, rid, old_value, new_value):
+        self._lock.acquire()
         # if self.col_btree[column_number].has_key(old_value) > 0:
         #     print("FALSE")
         #     return False
        # print(old_value, new_value)
         old_rids = self.col_btree[column_number].__getitem__(old_value)
+        #print(old_rids)
         old_rids.remove(rid)
         new_rids = []
         if self.col_btree[column_number].has_key(new_value) > 0:
@@ -93,6 +102,7 @@ class Index:
         update_dict[old_value] = old_rids
         update_dict[new_value] = new_rids
         self.col_btree[column_number].update(update_dict)
+        self._lock.release()
         return True
 
     def select_index(self, column_number, value):

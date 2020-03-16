@@ -57,9 +57,9 @@ class LockTable:
                 self.lock.release()
                 return True
             elif(counter.readers==1 and tid in counter.reader_transactions):
-                counter.reader_transactions.remove(tid)
 
                 counter.reader_mod_lock.acquire()
+                counter.reader_transactions.remove(tid)
                 counter.readers-=1
                 counter.reader_mod_lock.release()
 
